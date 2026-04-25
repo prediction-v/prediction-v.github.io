@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Vanna • Verified Tipster Feed</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #0a0c10;
+            color: #fff;
+            line-height: 1.5;
+        }
+
+        .app {
+            max-width: 600px;
+            margin: 0 auto;
+            padding-bottom: 70px;
+        }
+
+        /* Header */
+        .header {
+            position: sticky;
+            top: 0;
+            background: rgba(10, 12, 16, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 16px;
+        }
+
+        .header-actions a {
+            color: #8e8e9a;
+            text-decoration: none;
+            font-size: 1.2rem;
+            transition: color 0.2s;
+        }
+
+        .header-actions a:hover {
+            color: #f5576c;
+        }
+
+        /* Stories/Categories row */
+        .categories-row {
+            padding: 12px 16px;
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .categories-row::-webkit-scrollbar {
+            display: none;
+        }
+
+        .category-chip {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 6px 16px;
+            font-size: 0.85rem;
+            color: #e2e2e8;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid rgba(245, 87, 108, 0.3);
+        }
+
+        .category-chip.active {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white;
+            border-color: transparent;
+        }
+
+        /* Feed posts */
+        .post {
+            background: #12141c;
+            margin-bottom: 12px;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .post-header {
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .post-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            text-decoration: none;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .post-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .post-user {
+            flex: 1;
+        }
+
+        .post-name {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .post-username {
+            font-weight: 700;
+            color: white;
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+
+        .verified-badge {
+            background: #1e9eff;
+            border-radius: 10px;
+            padding: 2px 6px;
+            font-size: 0.6rem;
+            font-weight: 600;
+        }
+
+        .post-handle {
+            font-size: 0.75rem;
+            color: #8e8e9a;
+        }
+
+        .post-time {
+            font-size: 0.7rem;
+            color: #6b6b7a;
+        }
+
+        /* Match info card */
+        .match-card {
+            background: linear-gradient(135deg, #1a1c26, #12141c);
+            margin: 0 12px 12px 12px;
+            padding: 12px;
+            border-radius: 12px;
+            border-left: 3px solid #f5576c;
+        }
+
+        .match-teams {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 6px;
+        }
+
+        .match-details {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #8e8e9a;
+        }
+
+        .prediction-badge {
+            display: inline-block;
+            background: rgba(245, 87, 108, 0.2);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #f5576c;
+            margin-top: 8px;
+        }
+
+        .odds-badge {
+            background: #1a1c26;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #10b981;
+        }
+
+        /* Proof section */
+        .proof-section {
+            padding: 12px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            background: rgba(0,0,0,0.2);
+        }
+
+        .proof-title {
+            font-size: 0.7rem;
+            color: #8e8e9a;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .proof-images {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            margin-bottom: 8px;
+        }
+
+        .proof-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            object-fit: cover;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .proof-links {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .proof-link {
+            font-size: 0.7rem;
+            color: #1e9eff;
+            text-decoration: none;
+            word-break: break-all;
+        }
+
+        /* Post actions */
+        .post-actions {
+            padding: 8px 16px;
+            display: flex;
+            gap: 20px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: #8e8e9a;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .action-btn.liked {
+            color: #f5576c;
+        }
+
+        .post-stats {
+            padding: 8px 16px 12px;
+            font-size: 0.75rem;
+            color: #6b6b7a;
+        }
+
+        /* Tipster CTA */
+        .tipster-cta {
+            background: linear-gradient(135deg, #1a1c26, #12141c);
+            margin: 12px;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px dashed rgba(245, 87, 108, 0.3);
+        }
+
+        .tipster-cta p {
+            color: #8e8e9a;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 24px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #f5576c;
+            padding: 8px 16px;
+            border-radius: 24px;
+            color: #f5576c;
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+
+        /* Bottom nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 12, 16, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding: 8px 16px 20px;
+            display: flex;
+            justify-content: space-around;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .bottom-nav a {
+            color: #6b6b7a;
+            text-decoration: none;
+            font-size: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .bottom-nav a.active {
+            color: #f5576c;
+        }
+
+        .bottom-nav span {
+            font-size: 0.65rem;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(245, 87, 108, 0.2);
+            border-top-color: #f5576c;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            padding: 10px 20px;
+            border-radius: 24px;
+            font-size: 0.85rem;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <div class="logo">Prediction</div>
+            <div class="header-actions">
+                <a href="leaderboard.html" title="Leaderboard">🏆</a>
+                <a href="notifications.html" title="Notifications">🔔</a>
+            </div>
+        </div>
+
+        <div class="categories-row" id="categoriesRow">
+            <div class="category-chip active" data-category="all">All</div>
+            <div class="category-chip" data-category="football">⚽ Football</div>
+            <div class="category-chip" data-category="basketball">🏀 Basketball</div>
+            <div class="category-chip" data-category="tennis">🎾 Tennis</div>
+            <div class="category-chip" data-category="mma">🥊 MMA</div>
+        </div>
+
+        <div id="feedContainer">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading predictions...</p>
+            </div>
+        </div>
+
+        <div class="tipster-cta" id="tipsterCta" style="display: none;">
+            <p>🎯 Want to share your predictions and earn from wins?</p>
+            <a href="setup-profile.html" class="btn-primary">Become a Tipster →</a>
+        </div>
+
+        <div class="bottom-nav">
+            <a href="index.html" class="active">🏠<span>Feed</span></a>
+            <a href="search.html">🔍<span>Search</span></a>
+            <a href="create-prediction.html">➕<span>Tip</span></a>
+            <a href="leaderboard.html">🏆<span>Top</span></a>
+            <a href="profile.html">👤<span>Profile</span></a>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Supabase configuration
+        const SUPABASE_URL = 'https://wmqsephiktkndrzasdam.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndtcXNlcGhpa3RrbmRyemFzZGFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNzk2NDEsImV4cCI6MjA5MjY1NTY0MX0.cpun979RKcODBePmVFij02PPcLwiSTRESrzPkiuTB5I';
+        
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let currentUser = null;
+        let currentTipster = null;
+        let currentCategory = 'all';
+        let page = 0;
+        let isLoading = false;
+        let hasMore = true;
+        let userVotes = {};
+
+        async function init() {
+            // Check auth
+            const { data: { user } } = await sb.auth.getUser();
+            currentUser = user;
+            
+            if (currentUser) {
+                // Check if user is a tipster (has profile)
+                const { data: profile } = await sb
+                    .from('profiles')
+                    .select('id, page_name')
+                    .eq('id', currentUser.id)
+                    .maybeSingle();
+                
+                if (profile) {
+                    currentTipster = profile;
+                    document.getElementById('tipsterCta').style.display = 'none';
+                } else {
+                    document.getElementById('tipsterCta').style.display = 'block';
+                }
+                
+                await loadUserVotes();
+            }
+            
+            await loadPredictions();
+            await setupCategories();
+        }
+        
+        async function loadUserVotes() {
+            if (!currentUser) return;
+            const { data } = await sb
+                .from('votes')
+                .select('prediction_id, vote_type')
+                .eq('user_id', currentUser.id);
+            
+            userVotes = {};
+            (data || []).forEach(v => {
+                userVotes[v.prediction_id] = v.vote_type;
+            });
+        }
+        
+        async function setupCategories() {
+            const chips = document.querySelectorAll('.category-chip');
+            chips.forEach(chip => {
+                chip.addEventListener('click', () => {
+                    chips.forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    currentCategory = chip.dataset.category;
+                    page = 0;
+                    hasMore = true;
+                    document.getElementById('feedContainer').innerHTML = '';
+                    loadPredictions(true);
+                });
+            });
+        }
+        
+        async function loadPredictions(reset = false) {
+            if (isLoading) return;
+            isLoading = true;
+            
+            if (reset) {
+                page = 0;
+                hasMore = true;
+            }
+            
+            let query = sb
+                .from('predictions')
+                .select(`
+                    *,
+                    tipster:tipster_id (
+                        id,
+                        username,
+                        display_name,
+                        avatar_url,
+                        page_name,
+                        verification_status
+                    ),
+                    prediction_categories (
+                        category:category_id (
+                            name,
+                            slug,
+                            icon
+                        )
+                    )
+                `)
+                .order('created_at', { ascending: false })
+                .range(page * 10, (page + 1) * 10 - 1);
+            
+            if (currentCategory !== 'all') {
+                // Filter by category via the junction table
+                query = sb
+                    .from('predictions')
+                    .select(`
+                        *,
+                        tipster:tipster_id (
+                            id,
+                            username,
+                            display_name,
+                            avatar_url,
+                            page_name,
+                            verification_status
+                        ),
+                        prediction_categories!inner (
+                            category:category_id (
+                                name,
+                                slug,
+                                icon
+                            )
+                        )
+                    `)
+                    .eq('prediction_categories.category.slug', currentCategory)
+                    .order('created_at', { ascending: false })
+                    .range(page * 10, (page + 1) * 10 - 1);
+            }
+            
+            const { data, error } = await query;
+            
+            if (error) {
+                console.error('Error loading predictions:', error);
+                isLoading = false;
+                return;
+            }
+            
+            if (!data || data.length === 0) {
+                if (page === 0) {
+                    document.getElementById('feedContainer').innerHTML = `
+                        <div style="text-align: center; padding: 60px 20px; color: #6b6b7a;">
+                            <div style="font-size: 3rem; margin-bottom: 16px;">📭</div>
+                            <p>No predictions yet</p>
+                            <p style="font-size: 0.85rem; margin-top: 8px;">Be the first to share a tip!</p>
+                        </div>
+                    `;
+                }
+                hasMore = false;
+                isLoading = false;
+                return;
+            }
+            
+            if (data.length < 10) hasMore = false;
+            page++;
+            
+            // Get vote counts
+            for (let pred of data) {
+                const { count: upCount } = await sb
+                    .from('votes')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('prediction_id', pred.id)
+                    .eq('vote_type', 'up');
+                
+                const { count: downCount } = await sb
+                    .from('votes')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('prediction_id', pred.id)
+                    .eq('vote_type', 'down');
+                
+                pred.upvotes = upCount || 0;
+                pred.downvotes = downCount || 0;
+                pred.score = (upCount || 0) - (downCount || 0);
+            }
+            
+            renderPredictions(data, reset);
+            isLoading = false;
+        }
+        
+        function renderPredictions(predictions, reset) {
+            const container = document.getElementById('feedContainer');
+            if (reset) container.innerHTML = '';
+            
+            const html = predictions.map(pred => {
+                const tipster = pred.tipster;
+                const displayName = tipster?.display_name || tipster?.username || 'Tipster';
+                const avatarLetter = displayName.charAt(0).toUpperCase();
+                const isVerified = tipster?.verification_status === 'verified';
+                const pageUrl = tipster?.page_name ? `/tipster.html?page=${tipster.page_name}` : `#`;
+                const proofImages = pred.proof_image_urls || [];
+                const proofLinks = pred.proof_links || [];
+                const userVoted = userVotes[pred.id];
+                
+                // Get category icon
+                let categoryIcon = '🎯';
+                if (pred.prediction_categories && pred.prediction_categories[0]) {
+                    categoryIcon = pred.prediction_categories[0].category?.icon || '🎯';
+                }
+                
+                return `
+                    <div class="post" data-prediction-id="${pred.id}">
+                        <div class="post-header">
+                            <a href="${pageUrl}" class="post-avatar">
+                                ${tipster?.avatar_url ? `<img src="${tipster.avatar_url}" alt="">` : avatarLetter}
+                            </a>
+                            <div class="post-user">
+                                <div class="post-name">
+                                    <a href="${pageUrl}" class="post-username">${escapeHtml(displayName)}</a>
+                                    ${isVerified ? '<span class="verified-badge">✓ Verified</span>' : ''}
+                                    ${categoryIcon ? `<span style="margin-left: auto; font-size: 0.8rem;">${categoryIcon}</span>` : ''}
+                                </div>
+                                <div class="post-handle">${tipster?.page_name ? `@${tipster.page_name}` : ''}</div>
+                                <div class="post-time">${timeAgo(pred.created_at)}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="match-card">
+                            <div class="match-teams">${escapeHtml(pred.match_name)}</div>
+                            <div class="match-details">
+                                <span>${pred.match_date ? new Date(pred.match_date).toLocaleDateString() : 'Date TBD'}</span>
+                                ${pred.odds ? `<span class="odds-badge">Odds: ${pred.odds}</span>` : ''}
+                            </div>
+                            <div class="prediction-badge">
+                                🎯 Prediction: ${escapeHtml(pred.prediction_value || pred.prediction_type || 'Pick')}
+                            </div>
+                            ${pred.description ? `<div style="margin-top: 8px; font-size: 0.8rem; color: #cbd5e1;">${escapeHtml(pred.description)}</div>` : ''}
+                        </div>
+                        
+                        ${(proofImages.length > 0 || proofLinks.length > 0) ? `
+                            <div class="proof-section">
+                                <div class="proof-title">
+                                    📸 Proof of Winning
+                                    <span style="font-size: 0.65rem; color: #10b981;">✓ Verified</span>
+                                </div>
+                                ${proofImages.length > 0 ? `
+                                    <div class="proof-images">
+                                        ${proofImages.map(img => `
+                                            <img src="${img}" class="proof-image" onclick="window.open('${img}', '_blank')">
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                                ${proofLinks.length > 0 ? `
+                                    <div class="proof-links">
+                                        ${proofLinks.map(link => `
+                                            <a href="${link}" class="proof-link" target="_blank">🔗 View Bet Slip</a>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        ` : ''}
+                        
+                        <div class="post-actions">
+                            <button class="action-btn ${userVoted === 'up' ? 'liked' : ''}" onclick="handleVote('${pred.id}', 'up', this)">
+                                👍 ${pred.upvotes || 0}
+                            </button>
+                            <button class="action-btn" onclick="handleVote('${pred.id}', 'down', this)">
+                                👎 ${pred.downvotes || 0}
+                            </button>
+                            <button class="action-btn" onclick="window.location.href='prediction.html?id=${pred.id}'">
+                                💬
+                            </button>
+                            <button class="action-btn" onclick="sharePrediction('${pred.id}', '${tipster?.page_name || ''}')">
+                                🔗
+                            </button>
+                        </div>
+                        
+                        <div class="post-stats">
+                            ${pred.status === 'won' ? '✅ This prediction WON' : pred.status === 'lost' ? '❌ This prediction LOST' : '⏳ Awaiting result'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            if (reset) {
+                container.innerHTML = html;
+            } else {
+                container.insertAdjacentHTML('beforeend', html);
+            }
+        }
+        
+        async function handleVote(predictionId, voteType, button) {
+            if (!currentUser) {
+                showToast('Login to vote');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            const currentVote = userVotes[predictionId];
+            
+            if (currentVote === voteType) {
+                // Remove vote
+                await sb
+                    .from('votes')
+                    .delete()
+                    .eq('prediction_id', predictionId)
+                    .eq('user_id', currentUser.id);
+                delete userVotes[predictionId];
+            } else {
+                // Add/change vote
+                await sb
+                    .from('votes')
+                    .upsert({
+                        prediction_id: predictionId,
+                        user_id: currentUser.id,
+                        vote_type: voteType
+                    }, { onConflict: 'prediction_id, user_id' });
+                userVotes[predictionId] = voteType;
+            }
+            
+            // Refresh post stats without reloading everything
+            const post = document.querySelector(`.post[data-prediction-id="${predictionId}"]`);
+            if (post) {
+                const { count: upCount } = await sb
+                    .from('votes')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('prediction_id', predictionId)
+                    .eq('vote_type', 'up');
+                
+                const { count: downCount } = await sb
+                    .from('votes')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('prediction_id', predictionId)
+                    .eq('vote_type', 'down');
+                
+                const upBtn = post.querySelector('.action-btn:first-child');
+                const downBtn = post.querySelector('.action-btn:nth-child(2)');
+                
+                if (upBtn) {
+                    upBtn.innerHTML = `👍 ${upCount || 0}`;
+                    if (userVotes[predictionId] === 'up') {
+                        upBtn.classList.add('liked');
+                    } else {
+                        upBtn.classList.remove('liked');
+                    }
+                }
+                
+                if (downBtn) {
+                    downBtn.innerHTML = `👎 ${downCount || 0}`;
+                }
+            }
+        }
+        
+        function sharePrediction(predictionId, tipsterPage) {
+            const url = `${window.location.origin}/prediction.html?id=${predictionId}`;
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Check out this prediction',
+                    url: url
+                });
+            } else {
+                navigator.clipboard.writeText(url);
+                showToast('Link copied! Share with your friends');
+            }
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function timeAgo(date) {
+            const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+            if (seconds < 60) return 'just now';
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `${minutes}m ago`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours}h ago`;
+            const days = Math.floor(hours / 24);
+            if (days < 7) return `${days}d ago`;
+            return new Date(date).toLocaleDateString();
+        }
+        
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+        
+        // Infinite scroll
+        window.addEventListener('scroll', () => {
+            if (isLoading || !hasMore) return;
+            const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+            if (scrollTop + clientHeight > scrollHeight - 500) {
+                loadPredictions();
+            }
+        });
+        
+        init();
+    </script>
+</body>
+</html>
