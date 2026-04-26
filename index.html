@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta name="google-site-verification" content="7NLHN6xUgwf-0qlMOkPp00NmRMXhOPJ-H4dNttppnFA" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Prediction-v • Tipster Feed</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #0a0c10;
+            color: #fff;
+            line-height: 1.5;
+        }
+
+        .app {
+            max-width: 600px;
+            margin: 0 auto;
+            padding-bottom: 70px;
+        }
+
+        /* Header */
+        .header {
+            position: sticky;
+            top: 0;
+            background: rgba(10, 12, 16, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .header-actions a {
+            color: #8e8e9a;
+            text-decoration: none;
+            font-size: 1.2rem;
+            transition: color 0.2s;
+        }
+
+        .dashboard-link {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .dashboard-link a {
+            color: white;
+        }
+
+        /* Stories Carousel */
+        .stories-carousel {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            background: #0a0c10;
+        }
+
+        .stories-scroll {
+            display: flex;
+            gap: 14px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .stories-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .story-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .story-ring {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            padding: 2px;
+        }
+
+        .story-avatar {
+            width: 66px;
+            height: 66px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #0a0c10;
+            background: #1a1c26;
+        }
+
+        .story-name {
+            font-size: 0.65rem;
+            color: #8e8e9a;
+            max-width: 70px;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Hero Banner */
+        .hero-banner {
+            background: linear-gradient(135deg, #1a1c26, #12141c);
+            margin: 16px;
+            padding: 24px;
+            border-radius: 24px;
+            text-align: center;
+            border: 1px solid rgba(245, 87, 108, 0.2);
+        }
+
+        .hero-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+        }
+
+        .hero-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .hero-subtitle {
+            font-size: 0.85rem;
+            color: #8e8e9a;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .hero-btn {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        /* Feed Posts */
+        .post {
+            background: #12141c;
+            margin-bottom: 12px;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .post-header {
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+
+        .post-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            text-decoration: none;
+            color: white;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .post-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .post-user-info {
+            flex: 1;
+        }
+
+        .post-name-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .post-username {
+            font-weight: 700;
+            color: white;
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+
+        .verified-badge {
+            background: #1e9eff;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 0.6rem;
+            font-weight: 600;
+        }
+
+        .post-handle {
+            font-size: 0.7rem;
+            color: #8e8e9a;
+        }
+
+        .post-time {
+            font-size: 0.65rem;
+            color: #6b6b7a;
+        }
+
+        .post-content {
+            padding: 0 16px 12px;
+        }
+
+        .post-text {
+            font-size: 0.9rem;
+            color: #cbd5e1;
+            line-height: 1.4;
+            margin-bottom: 12px;
+        }
+
+        .post-image {
+            width: 100%;
+            max-height: 400px;
+            object-fit: cover;
+            border-radius: 16px;
+            cursor: pointer;
+        }
+
+        .post-actions {
+            padding: 8px 16px;
+            display: flex;
+            gap: 24px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: #8e8e9a;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 0;
+            transition: all 0.2s;
+        }
+
+        .action-btn.liked {
+            color: #f5576c;
+        }
+
+        .action-btn:hover {
+            color: #f5576c;
+        }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 12, 16, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding: 8px 16px 20px;
+            display: flex;
+            justify-content: space-around;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .bottom-nav a {
+            color: #6b6b7a;
+            text-decoration: none;
+            font-size: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .bottom-nav a.active {
+            color: #f5576c;
+        }
+
+        .bottom-nav span {
+            font-size: 0.65rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(245, 87, 108, 0.2);
+            border-top-color: #f5576c;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b6b7a;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            padding: 10px 20px;
+            border-radius: 24px;
+            font-size: 0.85rem;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <div class="logo">Prediction-V</div>
+            <div class="header-actions" id="headerActions">
+                <a href="leaderboard.html" title="Leaderboard">🏆</a>
+                <a href="notifications.html" title="Notifications">🔔</a>
+            </div>
+        </div>
+
+        <div id="storiesContainer"></div>
+        <div id="mainContent"></div>
+
+        <div class="bottom-nav">
+            <a href="index.html" class="active">🏠<span>Feed</span></a>
+            <a href="search.html">🔍<span>Search</span></a>
+            <a href="feedback.html">💬<span>Feedback</span></a>
+            <a href="leaderboard.html">🏆<span>Top</span></a>
+            <a href="profile.html">👤<span>Profile</span></a>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://wmqsephiktkndrzasdam.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndtcXNlcGhpa3RrbmRyemFzZGFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNzk2NDEsImV4cCI6MjA5MjY1NTY0MX0.cpun979RKcODBePmVFij02PPcLwiSTRESrzPkiuTB5I';
+        
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let currentUser = null;
+        let isTipster = false;
+        let tipsterPageName = null;
+        let allFeedItems = [];
+        let activeStories = [];
+        let page = 0;
+        let isLoading = false;
+        let hasMore = true;
+        
+        async function init() {
+            const { data: { user } } = await sb.auth.getUser();
+            currentUser = user;
+            
+            if (currentUser) {
+                const { data: profile } = await sb
+                    .from('profiles')
+                    .select('id, page_name, user_type')
+                    .eq('id', currentUser.id)
+                    .maybeSingle();
+                
+                if (profile && profile.page_name) {
+                    isTipster = true;
+                    tipsterPageName = profile.page_name;
+                    const headerActions = document.getElementById('headerActions');
+                    const dashboardLink = document.createElement('a');
+                    dashboardLink.href = 'dashboard.html';
+                    dashboardLink.title = 'Dashboard';
+                    dashboardLink.innerHTML = '📊';
+                    dashboardLink.style.background = 'linear-gradient(135deg, #f093fb, #f5576c)';
+                    dashboardLink.style.padding = '6px 10px';
+                    dashboardLink.style.borderRadius = '20px';
+                    dashboardLink.style.fontSize = '0.8rem';
+                    headerActions.insertBefore(dashboardLink, headerActions.firstChild);
+                }
+            }
+            
+            await loadActiveStories();
+            await loadFeed();
+        }
+        
+        async function loadActiveStories() {
+            const { data, error } = await sb
+                .from('stories')
+                .select(`
+                    *,
+                    tipster:tipster_id (
+                        id,
+                        username,
+                        display_name,
+                        avatar_url,
+                        page_name,
+                        verification_status
+                    )
+                `)
+                .gte('expires_at', new Date().toISOString())
+                .order('created_at', { ascending: false });
+            
+            if (!error && data && data.length > 0) {
+                activeStories = data;
+                renderStoriesCarousel();
+            }
+        }
+        
+        function renderStoriesCarousel() {
+            const container = document.getElementById('storiesContainer');
+            
+            if (activeStories.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            // Group stories by tipster
+            const uniqueTipsters = {};
+            activeStories.forEach(story => {
+                if (story.tipster && !uniqueTipsters[story.tipster.id]) {
+                    uniqueTipsters[story.tipster.id] = story;
+                }
+            });
+            
+            const tipsterStories = Object.values(uniqueTipsters);
+            
+            container.innerHTML = `
+                <div class="stories-carousel">
+                    <div class="stories-scroll">
+                        ${tipsterStories.map(story => {
+                            const tipster = story.tipster;
+                            const displayName = tipster?.display_name || tipster?.username || 'Tipster';
+                            const avatarUrl = tipster?.avatar_url;
+                            return `
+                                <div class="story-item" onclick="viewTipsterStories('${tipster.id}', '${tipster.page_name}')">
+                                    <div class="story-ring">
+                                        ${avatarUrl ? 
+                                            `<img src="${avatarUrl}" class="story-avatar" alt="">` : 
+                                            `<div class="story-avatar" style="display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #f093fb, #f5576c); font-size: 1.5rem;">${displayName.charAt(0).toUpperCase()}</div>`
+                                        }
+                                    </div>
+                                    <span class="story-name">${escapeHtml(displayName.length > 12 ? displayName.substring(0, 10) + '...' : displayName)}</span>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        async function loadFeed(reset = false) {
+            if (isLoading) return;
+            isLoading = true;
+            
+            if (reset) {
+                page = 0;
+                hasMore = true;
+                allFeedItems = [];
+            }
+            
+            const from = page * 10;
+            const to = from + 9;
+            
+            const { data: posts, error } = await sb
+                .from('posts')
+                .select(`
+                    *,
+                    tipster:tipster_id (
+                        id,
+                        username,
+                        display_name,
+                        avatar_url,
+                        page_name,
+                        verification_status
+                    )
+                `)
+                .order('created_at', { ascending: false })
+                .range(from, to);
+            
+            if (error) {
+                console.error('Error loading feed:', error);
+                isLoading = false;
+                return;
+            }
+            
+            if (!posts || posts.length === 0) {
+                if (page === 0) {
+                    renderEmptyFeed();
+                }
+                hasMore = false;
+                isLoading = false;
+                return;
+            }
+            
+            if (posts.length < 10) hasMore = false;
+            page++;
+            
+            for (let post of posts) {
+                const { count } = await sb
+                    .from('post_likes')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('post_id', post.id);
+                
+                let userLiked = false;
+                if (currentUser) {
+                    const { data: likeData } = await sb
+                        .from('post_likes')
+                        .select('id')
+                        .eq('post_id', post.id)
+                        .eq('user_id', currentUser.id)
+                        .maybeSingle();
+                    userLiked = !!likeData;
+                }
+                
+                post.likes_count = count || 0;
+                post.user_liked = userLiked;
+                post.type = 'post';
+            }
+            
+            allFeedItems = [...allFeedItems, ...posts];
+            renderFeed(reset);
+            isLoading = false;
+        }
+        
+        function renderFeed(reset) {
+            const container = document.getElementById('mainContent');
+            
+            if (reset) {
+                container.innerHTML = '';
+            }
+            
+            const showHero = !currentUser && allFeedItems.length === 0;
+            const showBecomeTipster = currentUser && !isTipster && allFeedItems.length === 0;
+            
+            let heroHtml = '';
+            if (showHero) {
+                heroHtml = `
+                    <div class="hero-banner">
+                        <div class="hero-icon">🎯</div>
+                        <div class="hero-title">Join Prediction-v Today</div>
+                        <div class="hero-subtitle">Get verified predictions from top tipsters. Pay only after winning!</div>
+                        <a href="login.html" class="hero-btn">Get Started →</a>
+                    </div>
+                `;
+            } else if (showBecomeTipster) {
+                heroHtml = `
+                    <div class="hero-banner">
+                        <div class="hero-icon">🚀</div>
+                        <div class="hero-title">Become a Tipster</div>
+                        <div class="hero-subtitle">Share your predictions, build a following, and earn from winning tips!</div>
+                        <a href="setup-profile.html" class="hero-btn">Become a Tipster →</a>
+                    </div>
+                `;
+            }
+            
+            const feedHtml = allFeedItems.map(item => renderPost(item)).join('');
+            
+            if (reset) {
+                container.innerHTML = heroHtml + feedHtml;
+            } else {
+                container.insertAdjacentHTML('beforeend', feedHtml);
+            }
+        }
+        
+        function renderPost(post) {
+            const tipster = post.tipster;
+            const displayName = tipster?.display_name || tipster?.username || 'Tipster';
+            const avatarLetter = displayName.charAt(0).toUpperCase();
+            const isVerified = tipster?.verification_status === 'verified';
+            const pageUrl = tipster?.page_name ? `tipster.html?page=${tipster.page_name}` : '#';
+            const userLiked = post.user_liked;
+            
+            return `
+                <div class="post" data-post-id="${post.id}">
+                    <div class="post-header" onclick="window.location.href='${pageUrl}'">
+                        <div class="post-avatar">
+                            ${tipster?.avatar_url ? `<img src="${tipster.avatar_url}" alt="">` : avatarLetter}
+                        </div>
+                        <div class="post-user-info">
+                            <div class="post-name-row">
+                                <span class="post-username">${escapeHtml(displayName)}</span>
+                                ${isVerified ? '<span class="verified-badge">✓ Verified</span>' : ''}
+                            </div>
+                            <div class="post-handle">@${escapeHtml(tipster?.page_name || 'tipster')}</div>
+                            <div class="post-time">${timeAgo(post.created_at)}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="post-content">
+                        <div class="post-text">${escapeHtml(post.content)}</div>
+                        ${post.image_url ? `<img src="${post.image_url}" class="post-image" alt="Post image" onclick="event.stopPropagation(); window.open('${post.image_url}', '_blank')">` : ''}
+                    </div>
+                    
+                    <div class="post-actions">
+                        <button class="action-btn ${userLiked ? 'liked' : ''}" onclick="handleLike('${post.id}', event)">
+                            ❤️ ${post.likes_count || 0}
+                        </button>
+                        <button class="action-btn" onclick="event.stopPropagation(); window.location.href='comments.html?post=${post.id}'">
+                            💬
+                        </button>
+                        <button class="action-btn" onclick="sharePost('${post.id}', '${tipster?.page_name}', event)">
+                            🔗
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderEmptyFeed() {
+            const container = document.getElementById('mainContent');
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div style="font-size: 3rem; margin-bottom: 16px;">📭</div>
+                    <h3>No posts yet</h3>
+                    <p>Be the first to follow some tipsters or become a tipster yourself!</p>
+                    ${!currentUser ? '<a href="login.html" style="color: #f5576c; margin-top: 16px; display: inline-block;">Login to get started →</a>' : '<a href="setup-profile.html" style="color: #f5576c; margin-top: 16px; display: inline-block;">Become a Tipster →</a>'}
+                </div>
+            `;
+        }
+        
+        async function handleLike(postId, event) {
+            event.stopPropagation();
+            
+            if (!currentUser) {
+                showToast('Login to like posts');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            const { data: existing } = await sb
+                .from('post_likes')
+                .select('id')
+                .eq('post_id', postId)
+                .eq('user_id', currentUser.id)
+                .maybeSingle();
+            
+            if (existing) {
+                await sb.from('post_likes').delete().eq('id', existing.id);
+            } else {
+                await sb.from('post_likes').insert({ post_id: postId, user_id: currentUser.id });
+            }
+            
+            const post = allFeedItems.find(p => p.id === postId);
+            if (post) {
+                const { count } = await sb
+                    .from('post_likes')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('post_id', postId);
+                post.likes_count = count || 0;
+                post.user_liked = !existing;
+            }
+            
+            const button = event.target.closest('.action-btn');
+            if (button) {
+                const newCount = post?.likes_count || 0;
+                button.innerHTML = `❤️ ${newCount}`;
+                if (post?.user_liked) {
+                    button.classList.add('liked');
+                } else {
+                    button.classList.remove('liked');
+                }
+            }
+        }
+        
+        function viewTipsterStories(tipsterId, pageName) {
+            const tipsterStories = activeStories.filter(s => s.tipster_id === tipsterId);
+            localStorage.setItem('viewingStories', JSON.stringify(tipsterStories));
+            localStorage.setItem('currentStoryIndex', '0');
+            window.location.href = `story-viewer.html?tipster=${pageName}`;
+        }
+        
+        function sharePost(postId, pageName, event) {
+            event.stopPropagation();
+            const url = `${window.location.origin}/tipster.html?page=${pageName}`;
+            if (navigator.share) {
+                navigator.share({ title: 'Check out this tipster', url: url });
+            } else {
+                navigator.clipboard.writeText(url);
+                showToast('Link copied!');
+            }
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function timeAgo(date) {
+            const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+            if (seconds < 60) return 'just now';
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `${minutes}m ago`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours}h ago`;
+            const days = Math.floor(hours / 24);
+            return `${days}d ago`;
+        }
+        
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+        
+        window.addEventListener('scroll', () => {
+            if (isLoading || !hasMore) return;
+            const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+            if (scrollTop + clientHeight > scrollHeight - 500) {
+                loadFeed();
+            }
+        });
+        
+        init();
+    </script>
+</body>
+</html>

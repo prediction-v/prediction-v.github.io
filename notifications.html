@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Notifications • Ranka</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #0a0c10;
+            color: #fff;
+            line-height: 1.5;
+        }
+
+        .app {
+            max-width: 600px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding-bottom: 70px;
+        }
+
+        .header {
+            position: sticky;
+            top: 0;
+            background: rgba(10, 12, 16, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .mark-read-btn {
+            background: none;
+            border: none;
+            color: #8e8e9a;
+            font-size: 0.8rem;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+
+        .mark-read-btn:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .tabs {
+            display: flex;
+            padding: 8px 16px;
+            gap: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            background: #0a0c10;
+        }
+
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px 0;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #8e8e9a;
+            cursor: pointer;
+            border-radius: 30px;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white;
+        }
+
+        .notifications-container {
+            padding: 12px;
+        }
+
+        .notification-group {
+            margin-bottom: 20px;
+        }
+
+        .group-header {
+            padding: 8px 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #8e8e9a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .notification-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: #12141c;
+            border-radius: 16px;
+            padding: 14px 16px;
+            margin-bottom: 8px;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.05);
+            position: relative;
+        }
+
+        .notification-item.unread {
+            background: linear-gradient(135deg, rgba(245, 87, 108, 0.1), #12141c);
+            border-left: 3px solid #f5576c;
+        }
+
+        .notification-item:active {
+            transform: scale(0.98);
+        }
+
+        .notification-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(245, 87, 108, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-text {
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .notification-text strong {
+            color: #f5576c;
+        }
+
+        .notification-time {
+            font-size: 0.65rem;
+            color: #6b6b7a;
+            margin-top: 4px;
+        }
+
+        .unread-dot {
+            width: 8px;
+            height: 8px;
+            background: #f5576c;
+            border-radius: 50%;
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b6b7a;
+        }
+
+        .empty-state .icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(245, 87, 108, 0.2);
+            border-top-color: #f5576c;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 12, 16, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding: 8px 16px 20px;
+            display: flex;
+            justify-content: space-around;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .bottom-nav a {
+            color: #6b6b7a;
+            text-decoration: none;
+            font-size: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .bottom-nav a.active {
+            color: #f5576c;
+        }
+
+        .bottom-nav span {
+            font-size: 0.65rem;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            padding: 10px 20px;
+            border-radius: 24px;
+            font-size: 0.85rem;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <div class="logo">🔔 Notifications</div>
+            <button class="mark-read-btn" onclick="markAllAsRead()">Mark all read</button>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="all" onclick="switchTab('all')">All</div>
+            <div class="tab" data-tab="unread" onclick="switchTab('unread')">Unread</div>
+        </div>
+
+        <div id="notificationsContainer" class="notifications-container">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading notifications...</p>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <a href="index.html">🏠<span>Feed</span></a>
+            <a href="search.html">🔍<span>Search</span></a>
+            <a href="create-prediction.html">➕<span>Tip</span></a>
+            <a href="leaderboard.html">🏆<span>Top</span></a>
+            <a href="profile.html">👤<span>Profile</span></a>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://wmqsephiktkndrzasdam.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndtcXNlcGhpa3RrbmRyemFzZGFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNzk2NDEsImV4cCI6MjA5MjY1NTY0MX0.cpun979RKcODBePmVFij02PPcLwiSTRESrzPkiuTB5I';
+        
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let currentUser = null;
+        let allNotifications = [];
+        let currentTab = 'all';
+        
+        async function init() {
+            const { data: { user } } = await sb.auth.getUser();
+            if (!user) {
+                window.location.href = 'login.html?redirect=notifications.html';
+                return;
+            }
+            currentUser = user;
+            
+            await loadNotifications();
+            setupRealtimeSubscription();
+        }
+        
+        async function loadNotifications() {
+            const container = document.getElementById('notificationsContainer');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading notifications...</p></div>';
+            
+            // Fetch notifications without trying to join sender (handle separately)
+            const { data, error } = await sb
+                .from('notifications')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .order('created_at', { ascending: false })
+                .limit(100);
+            
+            if (error) {
+                console.error('Error loading notifications:', error);
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">⚠️</div>
+                        <p>Error loading notifications</p>
+                        <p style="font-size: 0.75rem;">${error.message}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            allNotifications = data || [];
+            
+            // Fetch sender profiles for each notification
+            const senderIds = [...new Set(allNotifications.map(n => n.sender_id).filter(id => id))];
+            
+            let senderMap = {};
+            if (senderIds.length > 0) {
+                const { data: senders } = await sb
+                    .from('profiles')
+                    .select('id, username, display_name, avatar_url, page_name')
+                    .in('id', senderIds);
+                
+                if (senders) {
+                    senderMap = {};
+                    senders.forEach(s => { senderMap[s.id] = s; });
+                }
+            }
+            
+            // Fetch prediction data for each notification
+            const predictionIds = [...new Set(allNotifications.map(n => n.prediction_id).filter(id => id))];
+            let predictionMap = {};
+            if (predictionIds.length > 0) {
+                const { data: predictions } = await sb
+                    .from('predictions')
+                    .select('id, match_name, prediction_value, status')
+                    .in('id', predictionIds);
+                
+                if (predictions) {
+                    predictionMap = {};
+                    predictions.forEach(p => { predictionMap[p.id] = p; });
+                }
+            }
+            
+            // Attach sender and prediction objects
+            allNotifications = allNotifications.map(notif => ({
+                ...notif,
+                sender: notif.sender_id ? senderMap[notif.sender_id] : null,
+                prediction: notif.prediction_id ? predictionMap[notif.prediction_id] : null
+            }));
+            
+            updateUnreadBadge();
+            renderNotifications();
+        }
+        
+        function renderNotifications() {
+            const container = document.getElementById('notificationsContainer');
+            
+            let filteredNotifications = allNotifications;
+            if (currentTab === 'unread') {
+                filteredNotifications = allNotifications.filter(n => !n.read);
+            }
+            
+            if (filteredNotifications.length === 0) {
+                const emptyMessage = currentTab === 'unread' 
+                    ? 'No unread notifications' 
+                    : 'No notifications yet';
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">🔔</div>
+                        <h3>${emptyMessage}</h3>
+                        <p>When someone follows you, votes on your tips, or comments, you'll see it here.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Group by date
+            const grouped = groupNotificationsByDate(filteredNotifications);
+            
+            let html = '';
+            for (const [groupName, notifications] of Object.entries(grouped)) {
+                html += `<div class="notification-group">
+                            <div class="group-header">${groupName}</div>`;
+                
+                for (const notif of notifications) {
+                    const icon = getNotificationIcon(notif.type);
+                    const text = getNotificationText(notif);
+                    const timeAgoText = timeAgo(notif.created_at);
+                    const isUnread = !notif.read;
+                    const clickUrl = getNotificationUrl(notif);
+                    
+                    html += `
+                        <div class="notification-item ${isUnread ? 'unread' : ''}" onclick="handleNotificationClick('${notif.id}', '${clickUrl}')">
+                            <div class="notification-icon">${icon}</div>
+                            <div class="notification-content">
+                                <div class="notification-text">${text}</div>
+                                <div class="notification-time">${timeAgoText}</div>
+                            </div>
+                            ${isUnread ? '<div class="unread-dot"></div>' : ''}
+                        </div>
+                    `;
+                }
+                
+                html += `</div>`;
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        function groupNotificationsByDate(notifications) {
+            const groups = {
+                'Today': [],
+                'Yesterday': [],
+                'This Week': [],
+                'Older': []
+            };
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            const weekAgo = new Date(today);
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            
+            for (const notif of notifications) {
+                const date = new Date(notif.created_at);
+                date.setHours(0, 0, 0, 0);
+                
+                if (date.getTime() === today.getTime()) {
+                    groups['Today'].push(notif);
+                } else if (date.getTime() === yesterday.getTime()) {
+                    groups['Yesterday'].push(notif);
+                } else if (date > weekAgo) {
+                    groups['This Week'].push(notif);
+                } else {
+                    groups['Older'].push(notif);
+                }
+            }
+            
+            const result = {};
+            for (const [key, value] of Object.entries(groups)) {
+                if (value.length > 0) result[key] = value;
+            }
+            return result;
+        }
+        
+        function getNotificationIcon(type) {
+            const icons = {
+                'follow': '👥',
+                'vote_up': '❤️',
+                'vote_down': '👎',
+                'comment': '💬',
+                'win': '🏆',
+                'loss': '❌',
+                'payment': '💰',
+                'verification': '✅'
+            };
+            return icons[type] || '🔔';
+        }
+        
+        function getNotificationText(notif) {
+            const sender = notif.sender;
+            const senderName = sender?.display_name || sender?.username || 'Someone';
+            const prediction = notif.prediction;
+            
+            switch (notif.type) {
+                case 'follow':
+                    return `<strong>${escapeHtml(senderName)}</strong> started following you`;
+                
+                case 'vote_up':
+                    if (prediction) {
+                        return `<strong>${escapeHtml(senderName)}</strong> liked your prediction on <strong>"${escapeHtml(prediction.match_name)}"</strong>`;
+                    }
+                    return `<strong>${escapeHtml(senderName)}</strong> liked your prediction`;
+                
+                case 'vote_down':
+                    if (prediction) {
+                        return `<strong>${escapeHtml(senderName)}</strong> disliked your prediction on <strong>"${escapeHtml(prediction.match_name)}"</strong>`;
+                    }
+                    return `<strong>${escapeHtml(senderName)}</strong> disliked your prediction`;
+                
+                case 'comment':
+                    if (prediction) {
+                        const commentPreview = notif.content ? notif.content.substring(0, 60) : '';
+                        return `<strong>${escapeHtml(senderName)}</strong> commented on <strong>"${escapeHtml(prediction.match_name)}"</strong>: "${escapeHtml(commentPreview)}${commentPreview.length >= 60 ? '...' : ''}"`;
+                    }
+                    return `<strong>${escapeHtml(senderName)}</strong> commented on your prediction`;
+                
+                case 'win':
+                    if (prediction) {
+                        return `✅ Your prediction on <strong>"${escapeHtml(prediction.match_name)}"</strong> won!`;
+                    }
+                    return `✅ Your prediction won!`;
+                
+                case 'loss':
+                    if (prediction) {
+                        return `❌ Your prediction on <strong>"${escapeHtml(prediction.match_name)}"</strong> lost. Better luck next time!`;
+                    }
+                    return `❌ Your prediction lost`;
+                
+                case 'payment':
+                    if (notif.content) {
+                        return `<strong>💰 Payment received:</strong> ${notif.content}`;
+                    }
+                    return `<strong>💰</strong> You received a payment for a winning tip!`;
+                
+                case 'verification':
+                    if (notif.content === 'approved') {
+                        return `<strong>✅ Congratulations!</strong> Your tipster account has been verified.`;
+                    } else if (notif.content === 'rejected') {
+                        return `<strong>⚠️</strong> Your verification request was rejected. Please upload more proofs.`;
+                    }
+                    return `Your verification status has been updated.`;
+                
+                default:
+                    return notif.content || `New notification from ${escapeHtml(senderName)}`;
+            }
+        }
+        
+        function getNotificationUrl(notif) {
+            if (notif.prediction_id && (notif.type === 'vote_up' || notif.type === 'vote_down' || notif.type === 'comment' || notif.type === 'win' || notif.type === 'loss')) {
+                return `prediction.html?id=${notif.prediction_id}`;
+            }
+            if (notif.type === 'follow' && notif.sender) {
+                return `tipster.html?page=${notif.sender.page_name || notif.sender.username}`;
+            }
+            if (notif.prediction_id) {
+                return `prediction.html?id=${notif.prediction_id}`;
+            }
+            return '#';
+        }
+        
+        async function handleNotificationClick(notificationId, url) {
+            await markAsRead(notificationId);
+            
+            const notif = allNotifications.find(n => n.id === notificationId);
+            if (notif) notif.read = true;
+            
+            renderNotifications();
+            updateUnreadBadge();
+            
+            if (url && url !== '#') {
+                window.location.href = url;
+            }
+        }
+        
+        async function markAsRead(notificationId) {
+            await sb
+                .from('notifications')
+                .update({ read: true })
+                .eq('id', notificationId)
+                .eq('user_id', currentUser.id);
+        }
+        
+        async function markAllAsRead() {
+            if (allNotifications.length === 0) return;
+            
+            const unreadIds = allNotifications.filter(n => !n.read).map(n => n.id);
+            if (unreadIds.length === 0) {
+                showToast('No unread notifications');
+                return;
+            }
+            
+            await sb
+                .from('notifications')
+                .update({ read: true })
+                .in('id', unreadIds)
+                .eq('user_id', currentUser.id);
+            
+            allNotifications.forEach(n => n.read = true);
+            renderNotifications();
+            updateUnreadBadge();
+            showToast(`Marked ${unreadIds.length} notification${unreadIds.length !== 1 ? 's' : ''} as read`);
+        }
+        
+        function updateUnreadBadge() {
+            const unreadCount = allNotifications.filter(n => !n.read).length;
+            
+            if (unreadCount > 0) {
+                document.title = `(${unreadCount}) Notifications • Ranka`;
+                // Update badge in localStorage for other pages
+                localStorage.setItem('unreadNotifications', unreadCount);
+            } else {
+                document.title = `Notifications • Ranka`;
+                localStorage.setItem('unreadNotifications', '0');
+            }
+        }
+        
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
+            renderNotifications();
+        }
+        
+        function setupRealtimeSubscription() {
+            const channel = sb.channel('notifications-channel');
+            
+            channel
+                .on(
+                    'postgres_changes',
+                    {
+                        event: 'INSERT',
+                        schema: 'public',
+                        table: 'notifications',
+                        filter: `user_id=eq.${currentUser.id}`
+                    },
+                    async (payload) => {
+                        const newNotif = payload.new;
+                        
+                        // Fetch sender info
+                        let sender = null;
+                        if (newNotif.sender_id) {
+                            const { data } = await sb
+                                .from('profiles')
+                                .select('id, username, display_name, avatar_url, page_name')
+                                .eq('id', newNotif.sender_id)
+                                .single();
+                            sender = data;
+                        }
+                        
+                        // Fetch prediction info
+                        let prediction = null;
+                        if (newNotif.prediction_id) {
+                            const { data } = await sb
+                                .from('predictions')
+                                .select('id, match_name, prediction_value, status')
+                                .eq('id', newNotif.prediction_id)
+                                .single();
+                            prediction = data;
+                        }
+                        
+                        const fullNotif = {
+                            ...newNotif,
+                            sender: sender,
+                            prediction: prediction
+                        };
+                        
+                        allNotifications.unshift(fullNotif);
+                        renderNotifications();
+                        updateUnreadBadge();
+                        
+                        const senderName = sender?.display_name || sender?.username || 'Someone';
+                        showToast(`📬 New: ${senderName} ${getNotificationActionText(newNotif.type)}`);
+                    }
+                )
+                .subscribe();
+        }
+        
+        function getNotificationActionText(type) {
+            const texts = {
+                'follow': 'followed you',
+                'vote_up': 'liked your tip',
+                'vote_down': 'disliked your tip',
+                'comment': 'commented',
+                'payment': 'sent payment'
+            };
+            return texts[type] || 'interacted with you';
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function timeAgo(date) {
+            const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+            if (seconds < 60) return 'just now';
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `${minutes}m ago`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours}h ago`;
+            const days = Math.floor(hours / 24);
+            if (days < 7) return `${days}d ago`;
+            return new Date(date).toLocaleDateString();
+        }
+        
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+        
+        init();
+    </script>
+</body>
+</html>

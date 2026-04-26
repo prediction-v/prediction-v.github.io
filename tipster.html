@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Tipster Profile • Ranka</title>
+    <meta property="og:title" content="Tipster Profile" id="ogTitle">
+    <meta property="og:description" content="Professional tipster predictions" id="ogDesc">
+    <meta property="og:image" content="" id="ogImage">
+    <meta property="og:url" content="" id="ogUrl">
+    <meta name="twitter:card" content="summary_large_image">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #0a0c10;
+            color: #fff;
+            line-height: 1.5;
+        }
+
+        .app {
+            max-width: 600px;
+            margin: 0 auto;
+            padding-bottom: 70px;
+        }
+
+        /* Header */
+        .header {
+            position: sticky;
+            top: 0;
+            background: rgba(10, 12, 16, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 8px;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            flex: 1;
+        }
+
+        .share-menu {
+            position: relative;
+        }
+
+        .share-trigger {
+            background: none;
+            border: none;
+            color: #8e8e9a;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+        }
+
+        .share-dropdown {
+            position: absolute;
+            right: 0;
+            top: 40px;
+            background: #1a1c26;
+            border-radius: 16px;
+            padding: 8px;
+            display: none;
+            z-index: 200;
+            min-width: 180px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .share-dropdown.show {
+            display: block;
+        }
+
+        .share-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .share-option:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        /* Profile Cover */
+        .cover-area {
+            position: relative;
+            height: 180px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+        }
+
+        .cover-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .avatar-area {
+            position: relative;
+            margin-top: -55px;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            border: 4px solid #0a0c10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            font-weight: 700;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .follow-btn {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            border: none;
+            padding: 10px 24px;
+            border-radius: 30px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .follow-btn.following {
+            background: transparent;
+            border: 1px solid #f5576c;
+            color: #f5576c;
+        }
+
+        /* Profile Info */
+        .profile-info {
+            padding: 16px 20px;
+        }
+
+        .display-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .verified-badge {
+            background: #1e9eff;
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .page-name {
+            color: #8e8e9a;
+            font-size: 0.9rem;
+            margin-top: 6px;
+        }
+
+        .bio {
+            margin-top: 14px;
+            font-size: 0.95rem;
+            color: #cbd5e1;
+            line-height: 1.5;
+        }
+
+        /* Stats Row */
+        .stats-row {
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 20px;
+            background: #12141c;
+            margin: 8px 16px;
+            border-radius: 30px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #f5576c;
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
+            color: #8e8e9a;
+        }
+
+        /* Contact Buttons */
+        .contact-section {
+            padding: 12px 20px;
+            display: flex;
+            gap: 12px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            margin: 8px 0;
+        }
+
+        .contact-btn {
+            flex: 1;
+            background: rgba(255,255,255,0.05);
+            border: none;
+            padding: 10px;
+            border-radius: 30px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            text-decoration: none;
+        }
+
+        .contact-btn.whatsapp {
+            background: rgba(37, 211, 102, 0.2);
+            border: 1px solid #25d366;
+            color: #25d366;
+        }
+
+        .contact-btn.telegram {
+            background: rgba(0, 136, 204, 0.2);
+            border: 1px solid #0088cc;
+            color: #0088cc;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            padding: 0 20px;
+            gap: 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            background: #0a0c10;
+        }
+
+        .tab {
+            padding: 14px 0;
+            font-size: 0.9rem;
+            color: #8e8e9a;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            color: #f5576c;
+            border-bottom-color: #f5576c;
+        }
+
+        /* Posts Feed */
+        .posts-feed {
+            padding: 12px;
+        }
+
+        .post-card {
+            background: #12141c;
+            border-radius: 20px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .post-header {
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .post-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 700;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .post-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .post-user-info {
+            flex: 1;
+        }
+
+        .post-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .post-time {
+            font-size: 0.65rem;
+            color: #6b6b7a;
+            margin-top: 2px;
+        }
+
+        .post-content {
+            padding: 0 16px 12px;
+        }
+
+        .post-text {
+            font-size: 0.9rem;
+            line-height: 1.4;
+            color: #cbd5e1;
+        }
+
+        .post-image {
+            width: 100%;
+            max-height: 400px;
+            object-fit: cover;
+            border-radius: 16px;
+            margin-top: 12px;
+        }
+
+        .post-stats {
+            padding: 8px 16px 12px;
+            font-size: 0.7rem;
+            color: #6b6b7a;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* Predictions List */
+        .predictions-list {
+            padding: 12px;
+        }
+
+        .prediction-card {
+            background: #12141c;
+            border-radius: 16px;
+            margin-bottom: 12px;
+            padding: 16px;
+            border-left: 3px solid #f5576c;
+            cursor: pointer;
+        }
+
+        .prediction-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .match-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .status-badge {
+            font-size: 0.7rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        .status-won { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .status-lost { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .status-pending { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+
+        .prediction-detail {
+            font-size: 0.85rem;
+            color: #cbd5e1;
+            margin: 8px 0;
+        }
+
+        .prediction-odds {
+            color: #f5576c;
+            font-weight: 600;
+        }
+
+        .proof-indicator {
+            margin-top: 8px;
+            font-size: 0.7rem;
+            color: #1e9eff;
+        }
+
+        /* Stories Section */
+        .stories-section {
+            padding: 16px;
+        }
+
+        .stories-scroll {
+            display: flex;
+            gap: 16px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+
+        .stories-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .story-circle {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .story-ring {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            padding: 2px;
+        }
+
+        .story-image {
+            width: 66px;
+            height: 66px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #0a0c10;
+        }
+
+        .story-label {
+            font-size: 0.65rem;
+            color: #8e8e9a;
+            max-width: 70px;
+            text-align: center;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b6b7a;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 60px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(245, 87, 108, 0.2);
+            border-top-color: #f5576c;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 12, 16, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding: 8px 16px 20px;
+            display: flex;
+            justify-content: space-around;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .bottom-nav a {
+            color: #6b6b7a;
+            text-decoration: none;
+            font-size: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .bottom-nav a.active {
+            color: #f5576c;
+        }
+
+        .bottom-nav span {
+            font-size: 0.65rem;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            padding: 10px 20px;
+            border-radius: 24px;
+            font-size: 0.85rem;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <button class="back-btn" onclick="history.back()">←</button>
+            <div class="logo">Ranka</div>
+            <div class="share-menu">
+                <button class="share-trigger" onclick="toggleShareMenu()">🔗</button>
+                <div class="share-dropdown" id="shareDropdown">
+                    <div class="share-option" onclick="shareToWhatsApp()">📱 WhatsApp</div>
+                    <div class="share-option" onclick="shareToTelegram()">✈️ Telegram</div>
+                    <div class="share-option" onclick="shareToTwitter()">🐦 Twitter</div>
+                    <div class="share-option" onclick="shareToFacebook()">📘 Facebook</div>
+                    <div class="share-option" onclick="copyProfileLink()">📋 Copy Link</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="profileContent">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading profile...</p>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <a href="dashboard.html">📊<span>Dashboard</span></a>
+            <a href="index.html">🏠<span>Feed</span></a>
+            <a href="search.html">🔍<span>Search</span></a>
+            <a href="leaderboard.html">🏆<span>Top</span></a>
+            <a href="profile.html">👤<span>Profile</span></a>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://wmqsephiktkndrzasdam.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndtcXNlcGhpa3RrbmRyemFzZGFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNzk2NDEsImV4cCI6MjA5MjY1NTY0MX0.cpun979RKcODBePmVFij02PPcLwiSTRESrzPkiuTB5I';
+        
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let currentUser = null;
+        let currentTipster = null;
+        let isFollowing = false;
+        let currentTab = 'posts';
+        let posts = [];
+        let predictions = [];
+        let stories = [];
+        let profileUrl = '';
+        
+        async function init() {
+            const { data: { user } } = await sb.auth.getUser();
+            currentUser = user;
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const pageName = urlParams.get('page');
+            const tabParam = urlParams.get('tab');
+            
+            if (tabParam && ['posts', 'predictions', 'stories'].includes(tabParam)) {
+                currentTab = tabParam;
+            }
+            
+            if (!pageName) {
+                showError('No tipster specified');
+                return;
+            }
+            
+            await loadTipsterProfile(pageName);
+            await checkIfFollowing();
+        }
+        
+        async function loadTipsterProfile(pageName) {
+            const { data: profile, error } = await sb
+                .from('profiles')
+                .select('*')
+                .eq('page_name', pageName)
+                .maybeSingle();
+            
+            if (error || !profile) {
+                showError(`Tipster @${pageName} not found`);
+                return;
+            }
+            
+            currentTipster = profile;
+            profileUrl = `${window.location.origin}/tipster.html?page=${profile.page_name}`;
+            
+            // Update meta tags
+            document.title = `${profile.display_name || profile.username} • Ranka Tipster`;
+            document.getElementById('ogTitle')?.setAttribute('content', `${profile.display_name || profile.username} on Ranka`);
+            document.getElementById('ogDesc')?.setAttribute('content', profile.bio || `Check out ${profile.display_name}'s predictions on Ranka`);
+            if (profile.avatar_url) {
+                document.getElementById('ogImage')?.setAttribute('content', profile.avatar_url);
+            }
+            document.getElementById('ogUrl')?.setAttribute('content', profileUrl);
+            
+            // Load stats
+            const { data: stats } = await sb
+                .from('tipster_stats')
+                .select('*')
+                .eq('tipster_id', profile.id)
+                .maybeSingle();
+            
+            // Load counts
+            const [{ count: postsCount }, { count: predictionsCount }, { count: followersCount }] = await Promise.all([
+                sb.from('posts').select('*', { count: 'exact', head: true }).eq('tipster_id', profile.id),
+                sb.from('predictions').select('*', { count: 'exact', head: true }).eq('tipster_id', profile.id),
+                sb.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', profile.id)
+            ]);
+            
+            // Load predictions for win rate
+            const { data: allPredictions } = await sb
+                .from('predictions')
+                .select('status')
+                .eq('tipster_id', profile.id);
+            
+            const wins = (allPredictions || []).filter(p => p.status === 'won').length;
+            const total = (allPredictions || []).length;
+            const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
+            
+            // Load posts
+            await loadPosts();
+            
+            // Load predictions
+            await loadPredictions();
+            
+            // Load stories
+            await loadStories();
+            
+            renderProfile(profile, stats, winRate, postsCount || 0, predictionsCount || 0, followersCount || 0);
+        }
+        
+        async function loadPosts() {
+            const { data } = await sb
+                .from('posts')
+                .select('*')
+                .eq('tipster_id', currentTipster.id)
+                .order('created_at', { ascending: false })
+                .limit(20);
+            
+            posts = data || [];
+        }
+        
+        async function loadPredictions() {
+            const { data } = await sb
+                .from('predictions')
+                .select('*')
+                .eq('tipster_id', currentTipster.id)
+                .order('created_at', { ascending: false })
+                .limit(20);
+            
+            predictions = data || [];
+        }
+        
+        async function loadStories() {
+            const { data } = await sb
+                .from('stories')
+                .select('*')
+                .eq('tipster_id', currentTipster.id)
+                .gte('expires_at', new Date().toISOString())
+                .order('created_at', { ascending: false });
+            
+            stories = data || [];
+        }
+        
+        function renderProfile(profile, stats, winRate, postsCount, predictionsCount, followersCount) {
+            const container = document.getElementById('profileContent');
+            const displayName = profile.display_name || profile.username;
+            const avatarLetter = displayName.charAt(0).toUpperCase();
+            const isVerified = profile.verification_status === 'verified';
+            const isOwnProfile = currentUser && currentUser.id === profile.id;
+            
+            // Contact buttons
+            const showWhatsApp = profile.show_whatsapp !== false && profile.whatsapp_number;
+            const showTelegram = profile.show_telegram !== false && profile.telegram_username;
+            
+            container.innerHTML = `
+                <div class="cover-area">
+                    ${profile.cover_url ? `<img src="${profile.cover_url}" class="cover-image" alt="Cover">` : ''}
+                </div>
+                
+                <div class="avatar-area">
+                    <div class="avatar">
+                        ${profile.avatar_url ? `<img src="${profile.avatar_url}" alt="Avatar">` : avatarLetter}
+                    </div>
+                    ${!isOwnProfile ? `
+                        <button class="follow-btn" id="followBtn" onclick="toggleFollow()">
+                            ${isFollowing ? 'Following' : 'Follow'}
+                        </button>
+                    ` : `
+                        <a href="dashboard.html" class="follow-btn" style="text-decoration: none; background: transparent; border: 1px solid #334155; color: #8e8e9a;">Go to Dashboard</a>
+                    `}
+                </div>
+                
+                <div class="profile-info">
+                    <div class="display-name">
+                        ${escapeHtml(displayName)}
+                        ${isVerified ? '<span class="verified-badge">✓ Verified Tipster</span>' : ''}
+                    </div>
+                    <div class="page-name">@${escapeHtml(profile.page_name)}</div>
+                    ${profile.bio ? `<div class="bio">${escapeHtml(profile.bio)}</div>` : ''}
+                </div>
+                
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <div class="stat-number">${postsCount}</div>
+                        <div class="stat-label">Posts</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">${predictionsCount}</div>
+                        <div class="stat-label">Predictions</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">${followersCount}</div>
+                        <div class="stat-label">Followers</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">${winRate}%</div>
+                        <div class="stat-label">Win Rate</div>
+                    </div>
+                </div>
+                
+                ${(showWhatsApp || showTelegram) ? `
+                    <div class="contact-section">
+                        ${showWhatsApp ? `
+                            <button class="contact-btn whatsapp" onclick="contactWhatsApp('${profile.whatsapp_number}')">
+                                💬 WhatsApp
+                            </button>
+                        ` : ''}
+                        ${showTelegram ? `
+                            <button class="contact-btn telegram" onclick="contactTelegram('${profile.telegram_username}')">
+                                ✈️ Telegram
+                            </button>
+                        ` : ''}
+                    </div>
+                ` : ''}
+                
+                <div class="tabs">
+                    <div class="tab ${currentTab === 'posts' ? 'active' : ''}" onclick="switchTab('posts')">📝 Posts</div>
+                    <div class="tab ${currentTab === 'predictions' ? 'active' : ''}" onclick="switchTab('predictions')">🎯 Predictions</div>
+                    <div class="tab ${currentTab === 'stories' ? 'active' : ''}" onclick="switchTab('stories')">📸 Stories</div>
+                </div>
+                
+                <div id="tabContent">
+                    ${currentTab === 'posts' ? renderPostsTab() : (currentTab === 'predictions' ? renderPredictionsTab() : renderStoriesTab())}
+                </div>
+            `;
+        }
+        
+        function renderPostsTab() {
+            if (posts.length === 0) {
+                return `
+                    <div class="empty-state">
+                        <div style="font-size: 3rem; margin-bottom: 16px;">📝</div>
+                        <h3>No posts yet</h3>
+                        <p>${currentUser?.id === currentTipster?.id ? 'Share your first update with your followers!' : 'This tipster hasn\'t posted anything yet.'}</p>
+                    </div>
+                `;
+            }
+            
+            return `
+                <div class="posts-feed">
+                    ${posts.map(post => `
+                        <div class="post-card">
+                            <div class="post-header">
+                                <div class="post-avatar">
+                                    ${currentTipster?.avatar_url ? `<img src="${currentTipster.avatar_url}" alt="">` : (currentTipster?.display_name?.charAt(0).toUpperCase() || 'T')}
+                                </div>
+                                <div class="post-user-info">
+                                    <div class="post-name">${escapeHtml(currentTipster.display_name || currentTipster.username)}</div>
+                                    <div class="post-time">${timeAgo(post.created_at)}</div>
+                                </div>
+                            </div>
+                            <div class="post-content">
+                                <div class="post-text">${escapeHtml(post.content)}</div>
+                                ${post.image_url ? `<img src="${post.image_url}" class="post-image" alt="Post image" onclick="window.open('${post.image_url}', '_blank')">` : ''}
+                            </div>
+                            <div class="post-stats">
+                                ❤️ ${post.likes_count || 0} likes • 💬 ${post.comments_count || 0} comments
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        function renderPredictionsTab() {
+            if (predictions.length === 0) {
+                return `
+                    <div class="empty-state">
+                        <div style="font-size: 3rem; margin-bottom: 16px;">🎯</div>
+                        <h3>No predictions yet</h3>
+                        <p>${currentUser?.id === currentTipster?.id ? 'Add your first prediction with odds and proof!' : 'This tipster hasn\'t shared any predictions yet.'}</p>
+                    </div>
+                `;
+            }
+            
+            return `
+                <div class="predictions-list">
+                    ${predictions.map(pred => {
+                        let statusClass = '';
+                        let statusText = '';
+                        if (pred.status === 'won') {
+                            statusClass = 'status-won';
+                            statusText = '✅ WON';
+                        } else if (pred.status === 'lost') {
+                            statusClass = 'status-lost';
+                            statusText = '❌ LOST';
+                        } else {
+                            statusClass = 'status-pending';
+                            statusText = '⏳ Pending';
+                        }
+                        
+                        const hasProof = (pred.proof_image_urls && pred.proof_image_urls.length > 0) || 
+                                       (pred.proof_links && pred.proof_links.length > 0);
+                        
+                        return `
+                            <div class="prediction-card" onclick="window.location.href='prediction.html?id=${pred.id}'">
+                                <div class="prediction-header">
+                                    <span class="match-name">${escapeHtml(pred.match_name)}</span>
+                                    <span class="status-badge ${statusClass}">${statusText}</span>
+                                </div>
+                                <div class="prediction-detail">
+                                    🎯 ${escapeHtml(pred.prediction_value || pred.prediction_type || 'Pick')}
+                                </div>
+                                ${pred.odds ? `<div class="prediction-detail">📊 Odds: <span class="prediction-odds">${pred.odds}</span></div>` : ''}
+                                ${pred.match_date ? `<div class="prediction-detail">📅 ${new Date(pred.match_date).toLocaleDateString()}</div>` : ''}
+                                ${hasProof ? `<div class="proof-indicator">📸 Has proof attached</div>` : ''}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+        
+        function renderStoriesTab() {
+            if (stories.length === 0) {
+                return `
+                    <div class="empty-state">
+                        <div style="font-size: 3rem; margin-bottom: 16px;">📸</div>
+                        <h3>No active stories</h3>
+                        <p>${currentUser?.id === currentTipster?.id ? 'Create a story to engage your followers for 24 hours!' : 'This tipster has no active stories right now.'}</p>
+                    </div>
+                `;
+            }
+            
+            return `
+                <div class="stories-section">
+                    <div class="stories-scroll">
+                        ${stories.map(story => `
+                            <div class="story-circle" onclick="viewStory('${story.id}')">
+                                <div class="story-ring">
+                                    <img src="${story.image_url}" class="story-image" alt="Story">
+                                </div>
+                                <div class="story-label">${getTimeLeft(story.expires_at)}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function switchTab(tab) {
+            currentTab = tab;
+            renderProfile(currentTipster, null, 0, 0, 0, 0);
+        }
+        
+        async function checkIfFollowing() {
+            if (!currentUser || !currentTipster) return;
+            
+            const { data } = await sb
+                .from('follows')
+                .select('id')
+                .eq('follower_id', currentUser.id)
+                .eq('following_id', currentTipster.id)
+                .maybeSingle();
+            
+            isFollowing = !!data;
+            const followBtn = document.getElementById('followBtn');
+            if (followBtn) {
+                followBtn.textContent = isFollowing ? 'Following' : 'Follow';
+                followBtn.className = isFollowing ? 'follow-btn following' : 'follow-btn';
+            }
+        }
+        
+        async function toggleFollow() {
+            if (!currentUser) {
+                showToast('Login to follow tipsters');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            if (isFollowing) {
+                await sb
+                    .from('follows')
+                    .delete()
+                    .eq('follower_id', currentUser.id)
+                    .eq('following_id', currentTipster.id);
+                isFollowing = false;
+            } else {
+                await sb
+                    .from('follows')
+                    .insert({ follower_id: currentUser.id, following_id: currentTipster.id });
+                isFollowing = true;
+            }
+            
+            const followBtn = document.getElementById('followBtn');
+            if (followBtn) {
+                followBtn.textContent = isFollowing ? 'Following' : 'Follow';
+                followBtn.className = isFollowing ? 'follow-btn following' : 'follow-btn';
+            }
+            
+            showToast(isFollowing ? 'Following!' : 'Unfollowed');
+        }
+        
+        function viewStory(storyId) {
+            localStorage.setItem('viewingStories', JSON.stringify(stories));
+            localStorage.setItem('currentStoryIndex', '0');
+            window.location.href = `story-viewer.html?tipster=${currentTipster.page_name}`;
+        }
+        
+        // Share functions
+        function toggleShareMenu() {
+            const dropdown = document.getElementById('shareDropdown');
+            dropdown.classList.toggle('show');
+            setTimeout(() => {
+                document.addEventListener('click', function closeMenu(e) {
+                    if (!dropdown.contains(e.target) && !e.target.classList.contains('share-trigger')) {
+                        dropdown.classList.remove('show');
+                        document.removeEventListener('click', closeMenu);
+                    }
+                });
+            }, 10);
+        }
+        
+        function shareToWhatsApp() {
+            const text = `Check out ${currentTipster.display_name || currentTipster.username} on Ranka! ${profileUrl}`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+        }
+        
+        function shareToTelegram() {
+            const text = `Check out ${currentTipster.display_name || currentTipster.username} on Ranka!`;
+            window.open(`https://t.me/share/url?url=${encodeURIComponent(profileUrl)}&text=${encodeURIComponent(text)}`, '_blank');
+        }
+        
+        function shareToTwitter() {
+            const text = `Check out ${currentTipster.display_name || currentTipster.username} on Ranka for winning predictions!`;
+            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(profileUrl)}`, '_blank');
+        }
+        
+        function shareToFacebook() {
+            window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(profileUrl)}`, '_blank');
+        }
+        
+        function copyProfileLink() {
+            navigator.clipboard.writeText(profileUrl);
+            showToast('Profile link copied!');
+            document.getElementById('shareDropdown').classList.remove('show');
+        }
+        
+        function contactWhatsApp(number) {
+            const cleanNumber = number.replace(/\D/g, '');
+            window.open(`https://wa.me/${cleanNumber}`, '_blank');
+        }
+        
+        function contactTelegram(username) {
+            const cleanUsername = username.replace('@', '');
+            window.open(`https://t.me/${cleanUsername}`, '_blank');
+        }
+        
+        function getTimeLeft(expiresAt) {
+            const diff = new Date(expiresAt) - new Date();
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            if (hours > 0) return `${hours}h left`;
+            return `Expiring soon`;
+        }
+        
+        function timeAgo(date) {
+            const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+            if (seconds < 60) return 'just now';
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `${minutes}m ago`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours}h ago`;
+            const days = Math.floor(hours / 24);
+            return `${days}d ago`;
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function showError(message) {
+            document.getElementById('profileContent').innerHTML = `
+                <div class="empty-state">
+                    <div style="font-size: 3rem;">⚠️</div>
+                    <h3>${escapeHtml(message)}</h3>
+                    <a href="index.html" style="color: #f5576c; margin-top: 16px; display: inline-block;">Back to Feed</a>
+                </div>
+            `;
+        }
+        
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+        
+        init();
+    </script>
+</body>
+</html>

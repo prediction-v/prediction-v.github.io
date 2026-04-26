@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Comments • Ranka</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #0a0c10;
+            color: #fff;
+            line-height: 1.5;
+        }
+
+        .app {
+            max-width: 600px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+
+        .header {
+            position: sticky;
+            top: 0;
+            background: rgba(10, 12, 16, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 8px;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            flex: 1;
+        }
+
+        /* Original Post */
+        .original-post {
+            background: #12141c;
+            margin: 12px 16px;
+            border-radius: 20px;
+            padding: 16px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .post-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+
+        .post-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            overflow: hidden;
+        }
+
+        .post-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .post-user-info {
+            flex: 1;
+        }
+
+        .post-username {
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .post-handle {
+            font-size: 0.7rem;
+            color: #8e8e9a;
+        }
+
+        .post-text {
+            font-size: 0.9rem;
+            color: #cbd5e1;
+            line-height: 1.4;
+            margin-bottom: 12px;
+        }
+
+        .post-image {
+            width: 100%;
+            max-height: 300px;
+            object-fit: cover;
+            border-radius: 16px;
+        }
+
+        /* Comments Section */
+        .comments-section {
+            padding: 0 16px;
+        }
+
+        .comment-input {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            background: #12141c;
+            padding: 12px;
+            border-radius: 30px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .comment-input input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .comment-input input::placeholder {
+            color: #4a4a5a;
+        }
+
+        .comment-input button {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 30px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .comment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .comment-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            background: #12141c;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .comment-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .comment-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .comment-content {
+            flex: 1;
+        }
+
+        .comment-user {
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .comment-text {
+            font-size: 0.85rem;
+            color: #cbd5e1;
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+
+        .comment-time {
+            font-size: 0.65rem;
+            color: #6b6b7a;
+            margin-top: 6px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #6b6b7a;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid rgba(245, 87, 108, 0.2);
+            border-top-color: #f5576c;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 12, 16, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding: 8px 16px 20px;
+            display: flex;
+            justify-content: space-around;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .bottom-nav a {
+            color: #6b6b7a;
+            text-decoration: none;
+            font-size: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .bottom-nav a.active {
+            color: #f5576c;
+        }
+
+        .bottom-nav span {
+            font-size: 0.65rem;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            padding: 10px 20px;
+            border-radius: 24px;
+            font-size: 0.85rem;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <button class="back-btn" onclick="history.back()">←</button>
+            <div class="logo">Comments</div>
+            <div style="width: 32px;"></div>
+        </div>
+
+        <div id="commentsContent">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading comments...</p>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <a href="index.html">🏠<span>Feed</span></a>
+            <a href="search.html">🔍<span>Search</span></a>
+            <a href="feedback.html">💬<span>Feedback</span></a>
+            <a href="leaderboard.html">🏆<span>Top</span></a>
+            <a href="profile.html">👤<span>Profile</span></a>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://wmqsephiktkndrzasdam.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndtcXNlcGhpa3RrbmRyemFzZGFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNzk2NDEsImV4cCI6MjA5MjY1NTY0MX0.cpun979RKcODBePmVFij02PPcLwiSTRESrzPkiuTB5I';
+        
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let currentUser = null;
+        let post = null;
+        let comments = [];
+        
+        async function init() {
+            const { data: { user } } = await sb.auth.getUser();
+            currentUser = user;
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const postId = urlParams.get('post');
+            
+            if (!postId) {
+                showError('No post specified');
+                return;
+            }
+            
+            await loadPost(postId);
+            await loadComments(postId);
+            renderPage();
+        }
+        
+        async function loadPost(postId) {
+            const { data, error } = await sb
+                .from('posts')
+                .select(`
+                    *,
+                    tipster:tipster_id (
+                        id,
+                        username,
+                        display_name,
+                        avatar_url,
+                        page_name,
+                        verification_status
+                    )
+                `)
+                .eq('id', postId)
+                .single();
+            
+            if (error || !data) {
+                showError('Post not found');
+                return;
+            }
+            
+            post = data;
+        }
+        
+        async function loadComments(postId) {
+            const { data, error } = await sb
+                .from('comments')
+                .select(`
+                    *,
+                    user:user_id (
+                        id,
+                        username,
+                        display_name,
+                        avatar_url
+                    )
+                `)
+                .eq('prediction_id', postId)
+                .order('created_at', { ascending: false });
+            
+            if (!error) {
+                comments = data || [];
+            }
+        }
+        
+        function renderPage() {
+            const container = document.getElementById('commentsContent');
+            
+            if (!post) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div style="font-size: 3rem;">❌</div>
+                        <h3>Post not found</h3>
+                        <a href="index.html" style="color: #f5576c;">Back to Feed</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            const tipster = post.tipster;
+            const displayName = tipster?.display_name || tipster?.username || 'Tipster';
+            const avatarLetter = displayName.charAt(0).toUpperCase();
+            const avatarUrl = tipster?.avatar_url;
+            const pageUrl = tipster?.page_name ? `tipster.html?page=${tipster.page_name}` : '#';
+            const isVerified = tipster?.verification_status === 'verified';
+            
+            const commentsHtml = comments.length > 0 ? comments.map(comment => {
+                const commentUser = comment.user;
+                const commentName = commentUser?.display_name || commentUser?.username || 'User';
+                const commentAvatar = commentName.charAt(0).toUpperCase();
+                const commentAvatarUrl = commentUser?.avatar_url;
+                
+                return `
+                    <div class="comment-item">
+                        <div class="comment-avatar">
+                            ${commentAvatarUrl ? `<img src="${commentAvatarUrl}" alt="">` : commentAvatar}
+                        </div>
+                        <div class="comment-content">
+                            <div class="comment-user">${escapeHtml(commentName)}</div>
+                            <div class="comment-text">${escapeHtml(comment.content)}</div>
+                            <div class="comment-time">${timeAgo(comment.created_at)}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('') : '<div class="empty-state">No comments yet. Be the first to comment!</div>';
+            
+            container.innerHTML = `
+                <div class="original-post">
+                    <div class="post-header" onclick="window.location.href='${pageUrl}'">
+                        <div class="post-avatar">
+                            ${avatarUrl ? `<img src="${avatarUrl}" alt="">` : avatarLetter}
+                        </div>
+                        <div class="post-user-info">
+                            <div class="post-username">${escapeHtml(displayName)}</div>
+                            <div class="post-handle">@${escapeHtml(tipster?.page_name || 'tipster')}</div>
+                        </div>
+                    </div>
+                    <div class="post-text">${escapeHtml(post.content)}</div>
+                    ${post.image_url ? `<img src="${post.image_url}" class="post-image" alt="Post image">` : ''}
+                </div>
+                
+                <div class="comments-section">
+                    ${currentUser ? `
+                        <div class="comment-input">
+                            <input type="text" id="commentInput" placeholder="Write a comment...">
+                            <button onclick="postComment()">Post</button>
+                        </div>
+                    ` : `
+                        <div class="empty-state">
+                            <a href="login.html?redirect=comments.html?post=${post.id}" style="color: #f5576c;">Login to comment</a>
+                        </div>
+                    `}
+                    <div class="comment-list" id="commentList">
+                        ${commentsHtml}
+                    </div>
+                </div>
+            `;
+        }
+        
+        async function postComment() {
+            const input = document.getElementById('commentInput');
+            const content = input.value.trim();
+            
+            if (!content) {
+                showToast('Please enter a comment');
+                return;
+            }
+            
+            if (!currentUser) {
+                showToast('Login to comment');
+                window.location.href = `login.html?redirect=comments.html?post=${post.id}`;
+                return;
+            }
+            
+            const { data, error } = await sb
+                .from('comments')
+                .insert({
+                    prediction_id: post.id,
+                    user_id: currentUser.id,
+                    content: content
+                })
+                .select()
+                .single();
+            
+            if (error) {
+                showToast('Error posting comment');
+                return;
+            }
+            
+            input.value = '';
+            
+            // Reload comments
+            await loadComments(post.id);
+            
+            const commentList = document.getElementById('commentList');
+            const commentUser = currentUser;
+            const commentName = commentUser.email?.split('@')[0] || 'User';
+            const commentAvatar = commentName.charAt(0).toUpperCase();
+            
+            const newCommentHtml = `
+                <div class="comment-item">
+                    <div class="comment-avatar">${commentAvatar}</div>
+                    <div class="comment-content">
+                        <div class="comment-user">${escapeHtml(commentName)}</div>
+                        <div class="comment-text">${escapeHtml(content)}</div>
+                        <div class="comment-time">just now</div>
+                    </div>
+                </div>
+            `;
+            
+            if (commentList.innerHTML.includes('No comments yet')) {
+                commentList.innerHTML = newCommentHtml;
+            } else {
+                commentList.insertAdjacentHTML('afterbegin', newCommentHtml);
+            }
+            
+            showToast('Comment posted!');
+        }
+        
+        function timeAgo(date) {
+            const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+            if (seconds < 60) return 'just now';
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `${minutes}m ago`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours}h ago`;
+            const days = Math.floor(hours / 24);
+            return `${days}d ago`;
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function showError(message) {
+            document.getElementById('commentsContent').innerHTML = `
+                <div class="empty-state">
+                    <div style="font-size: 3rem;">⚠️</div>
+                    <h3>${escapeHtml(message)}</h3>
+                    <a href="index.html" style="color: #f5576c;">Back to Feed</a>
+                </div>
+            `;
+        }
+        
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+        
+        init();
+    </script>
+</body>
+</html>

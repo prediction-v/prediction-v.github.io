@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Leaderboard • Top Tipsters</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #0a0c10;
+            color: #fff;
+            line-height: 1.5;
+        }
+
+        .app {
+            max-width: 600px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding-bottom: 70px;
+        }
+
+        /* Header */
+        .header {
+            position: sticky;
+            top: 0;
+            background: rgba(10, 12, 16, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 8px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            padding: 8px 16px;
+            gap: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            background: #0a0c10;
+        }
+
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px 0;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #8e8e9a;
+            cursor: pointer;
+            border-radius: 30px;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white;
+        }
+
+        /* Filter row */
+        .filter-row {
+            padding: 12px 16px;
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .filter-row::-webkit-scrollbar {
+            display: none;
+        }
+
+        .filter-chip {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-chip.active {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white;
+        }
+
+        /* Leaderboard List */
+        .leaderboard-container {
+            padding: 12px;
+        }
+
+        /* Podium (Top 3) */
+        .podium {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 16px;
+            padding: 20px 16px 30px;
+            background: linear-gradient(180deg, #12141c 0%, #0a0c10 100%);
+            margin-bottom: 20px;
+            border-radius: 24px;
+        }
+
+        .podium-item {
+            text-align: center;
+            flex: 1;
+        }
+
+        .podium-rank {
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .podium-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin: 0 auto 8px;
+            overflow: hidden;
+            border: 3px solid;
+        }
+
+        .podium-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .podium-name {
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .podium-stats {
+            font-size: 0.7rem;
+            color: #8e8e9a;
+            margin-top: 4px;
+        }
+
+        /* 1st place special */
+        .podium-item.first .podium-rank {
+            color: #ffd700;
+        }
+        .podium-item.first .podium-avatar {
+            width: 85px;
+            height: 85px;
+            border-color: #ffd700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+        }
+        .podium-item.second .podium-rank {
+            color: #c0c0c0;
+        }
+        .podium-item.second .podium-avatar {
+            border-color: #c0c0c0;
+        }
+        .podium-item.third .podium-rank {
+            color: #cd7f32;
+        }
+        .podium-item.third .podium-avatar {
+            border-color: #cd7f32;
+        }
+
+        /* Leaderboard entry */
+        .leaderboard-entry {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: #12141c;
+            border-radius: 16px;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            transition: transform 0.2s;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .leaderboard-entry:active {
+            transform: scale(0.98);
+        }
+
+        .rank {
+            width: 40px;
+            text-align: center;
+            font-weight: 800;
+            font-size: 1.1rem;
+        }
+
+        .rank.top1 { color: #ffd700; }
+        .rank.top2 { color: #c0c0c0; }
+        .rank.top3 { color: #cd7f32; }
+
+        .avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .info {
+            flex: 1;
+        }
+
+        .name {
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .verified-badge {
+            background: #1e9eff;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 0.6rem;
+            font-weight: 600;
+        }
+
+        .page-name {
+            font-size: 0.7rem;
+            color: #8e8e9a;
+            margin-top: 2px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 12px;
+            margin-top: 6px;
+        }
+
+        .stat {
+            font-size: 0.7rem;
+            color: #6b6b7a;
+        }
+
+        .stat strong {
+            color: #f5576c;
+        }
+
+        .trend-icon {
+            font-size: 1.2rem;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 60px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(245, 87, 108, 0.2);
+            border-top-color: #f5576c;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b6b7a;
+        }
+
+        /* Bottom nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 12, 16, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding: 8px 16px 20px;
+            display: flex;
+            justify-content: space-around;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .bottom-nav a {
+            color: #6b6b7a;
+            text-decoration: none;
+            font-size: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .bottom-nav a.active {
+            color: #f5576c;
+        }
+
+        .bottom-nav span {
+            font-size: 0.65rem;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            padding: 10px 20px;
+            border-radius: 24px;
+            font-size: 0.85rem;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        /* Badge icons */
+        .crown {
+            font-size: 1rem;
+            margin-left: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <button class="back-btn" onclick="history.back()">←</button>
+            <div class="logo">🏆 Leaderboard</div>
+            <div style="width: 32px;"></div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="winrate" onclick="switchTab('winrate')">🏆 Win Rate</div>
+            <div class="tab" data-tab="volume" onclick="switchTab('volume')">📊 Most Picks</div>
+            <div class="tab" data-tab="profit" onclick="switchTab('profit')">💰 Top Profit</div>
+        </div>
+
+        <div class="filter-row" id="filterRow">
+            <div class="filter-chip active" data-category="all">All Sports</div>
+            <div class="filter-chip" data-category="football">⚽ Football</div>
+            <div class="filter-chip" data-category="basketball">🏀 Basketball</div>
+            <div class="filter-chip" data-category="tennis">🎾 Tennis</div>
+            <div class="filter-chip" data-category="mma">🥊 MMA</div>
+            <div class="filter-chip" data-category="esports">🎮 Esports</div>
+        </div>
+
+        <div id="leaderboardContainer" class="leaderboard-container">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading top tipsters...</p>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <a href="index.html">🏠<span>Feed</span></a>
+            <a href="search.html">🔍<span>Search</span></a>
+            <a href="create-prediction.html">➕<span>Tip</span></a>
+            <a href="leaderboard.html" class="active">🏆<span>Top</span></a>
+            <a href="profile.html">👤<span>Profile</span></a>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://wmqsephiktkndrzasdam.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndtcXNlcGhpa3RrbmRyemFzZGFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNzk2NDEsImV4cCI6MjA5MjY1NTY0MX0.cpun979RKcODBePmVFij02PPcLwiSTRESrzPkiuTB5I';
+        
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let currentTab = 'winrate';
+        let currentCategory = 'all';
+        let allTipsters = [];
+        
+        async function init() {
+            setupEventListeners();
+            await loadTipsters();
+        }
+        
+        function setupEventListeners() {
+            // Category filters
+            document.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    currentCategory = chip.dataset.category;
+                    renderLeaderboard();
+                });
+            });
+        }
+        
+        async function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
+            
+            // Change filter row visibility based on tab
+            const filterRow = document.getElementById('filterRow');
+            if (tab === 'winrate') {
+                filterRow.style.display = 'flex';
+            } else {
+                filterRow.style.display = 'flex';
+            }
+            
+            renderLeaderboard();
+        }
+        
+        async function loadTipsters() {
+            const container = document.getElementById('leaderboardContainer');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading tipsters...</p></div>';
+            
+            // Get all tipsters with profiles and stats
+            const { data: profiles, error } = await sb
+                .from('profiles')
+                .select(`
+                    id,
+                    username,
+                    display_name,
+                    avatar_url,
+                    page_name,
+                    verification_status,
+                    followers_count,
+                    tipster_stats (
+                        win_rate,
+                        total_wins,
+                        total_losses,
+                        total_picks,
+                        total_profit,
+                        average_odds
+                    )
+                `)
+                .not('page_name', 'is', null);
+            
+            if (error || !profiles || profiles.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div style="font-size: 3rem;">🏆</div>
+                        <h3>No tipsters yet</h3>
+                        <p>Be the first to become a tipster!</p>
+                        <a href="setup-profile.html" style="color: #f5576c;">Become a Tipster →</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            // For each tipster, get category-specific stats if needed
+            allTipsters = await Promise.all(profiles.map(async (tipster) => {
+                const stats = tipster.tipster_stats?.[0] || {};
+                
+                // If filtering by category, get predictions in that category
+                if (currentCategory !== 'all') {
+                    const { data: categoryData } = await sb
+                        .from('categories')
+                        .select('id')
+                        .eq('slug', currentCategory)
+                        .single();
+                    
+                    if (categoryData) {
+                        const { data: predictionsInCategory } = await sb
+                            .from('prediction_categories')
+                            .select('prediction_id')
+                            .eq('category_id', categoryData.id);
+                        
+                        const predictionIds = (predictionsInCategory || []).map(p => p.prediction_id);
+                        
+                        if (predictionIds.length > 0) {
+                            const { data: tipsterPredictions } = await sb
+                                .from('predictions')
+                                .select('status')
+                                .eq('tipster_id', tipster.id)
+                                .in('id', predictionIds);
+                            
+                            const categoryWins = (tipsterPredictions || []).filter(p => p.status === 'won').length;
+                            const categoryLosses = (tipsterPredictions || []).filter(p => p.status === 'lost').length;
+                            const categoryTotal = categoryWins + categoryLosses;
+                            
+                            return {
+                                ...tipster,
+                                stats: {
+                                    ...stats,
+                                    win_rate: categoryTotal > 0 ? (categoryWins / categoryTotal) * 100 : 0,
+                                    total_wins: categoryWins,
+                                    total_losses: categoryLosses,
+                                    total_picks: categoryTotal
+                                }
+                            };
+                        } else {
+                            return {
+                                ...tipster,
+                                stats: {
+                                    ...stats,
+                                    win_rate: 0,
+                                    total_wins: 0,
+                                    total_losses: 0,
+                                    total_picks: 0
+                                }
+                            };
+                        }
+                    }
+                }
+                
+                return { ...tipster, stats };
+            }));
+            
+            // Filter out tipsters with 0 picks for winrate tab
+            if (currentTab === 'winrate') {
+                allTipsters = allTipsters.filter(t => t.stats.total_picks >= 5);
+            }
+            
+            renderLeaderboard();
+        }
+        
+        function renderLeaderboard() {
+            const container = document.getElementById('leaderboardContainer');
+            
+            let sortedTipsters = [];
+            
+            if (currentTab === 'winrate') {
+                sortedTipsters = [...allTipsters].sort((a, b) => {
+                    const rateA = a.stats.win_rate || 0;
+                    const rateB = b.stats.win_rate || 0;
+                    if (rateB !== rateA) return rateB - rateA;
+                    return (b.stats.total_picks || 0) - (a.stats.total_picks || 0);
+                });
+            } else if (currentTab === 'volume') {
+                sortedTipsters = [...allTipsters].sort((a, b) => {
+                    return (b.stats.total_picks || 0) - (a.stats.total_picks || 0);
+                });
+            } else if (currentTab === 'profit') {
+                sortedTipsters = [...allTipsters].sort((a, b) => {
+                    return (b.stats.total_profit || 0) - (a.stats.total_profit || 0);
+                });
+            }
+            
+            // Show only top 50
+            sortedTipsters = sortedTipsters.slice(0, 50);
+            
+            if (sortedTipsters.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div style="font-size: 3rem;">📭</div>
+                        <h3>No tipsters in this category</h3>
+                        <p>Try a different filter</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Get top 3 for podium
+            const top3 = sortedTipsters.slice(0, 3);
+            const rest = sortedTipsters.slice(3);
+            
+            let podiumHtml = '';
+            if (currentTab === 'winrate' && top3.length >= 3) {
+                podiumHtml = `
+                    <div class="podium">
+                        <div class="podium-item second">
+                            <div class="podium-rank">🥈 2nd</div>
+                            <div class="podium-avatar">
+                                ${renderAvatarHtml(top3[1])}
+                            </div>
+                            <div class="podium-name">${escapeHtml(top3[1].display_name || top3[1].username)}</div>
+                            <div class="podium-stats">${Math.round(top3[1].stats.win_rate || 0)}% WR</div>
+                        </div>
+                        <div class="podium-item first">
+                            <div class="podium-rank">👑 1st</div>
+                            <div class="podium-avatar">
+                                ${renderAvatarHtml(top3[0])}
+                            </div>
+                            <div class="podium-name">${escapeHtml(top3[0].display_name || top3[0].username)}</div>
+                            <div class="podium-stats">${Math.round(top3[0].stats.win_rate || 0)}% WR</div>
+                        </div>
+                        <div class="podium-item third">
+                            <div class="podium-rank">🥉 3rd</div>
+                            <div class="podium-avatar">
+                                ${renderAvatarHtml(top3[2])}
+                            </div>
+                            <div class="podium-name">${escapeHtml(top3[2].display_name || top3[2].username)}</div>
+                            <div class="podium-stats">${Math.round(top3[2].stats.win_rate || 0)}% WR</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            const listHtml = rest.map((tipster, idx) => {
+                const rank = idx + 4;
+                const displayName = tipster.display_name || tipster.username || 'Tipster';
+                const isVerified = tipster.verification_status === 'verified';
+                const stats = tipster.stats;
+                
+                let statValue = '';
+                if (currentTab === 'winrate') {
+                    statValue = `${Math.round(stats.win_rate || 0)}% Win Rate`;
+                } else if (currentTab === 'volume') {
+                    statValue = `${stats.total_picks || 0} picks • ${stats.total_wins || 0} wins`;
+                } else {
+                    const profit = stats.total_profit || 0;
+                    statValue = `$${profit.toLocaleString()} profit`;
+                }
+                
+                let rankClass = '';
+                if (rank === 1) rankClass = 'top1';
+                else if (rank === 2) rankClass = 'top2';
+                else if (rank === 3) rankClass = 'top3';
+                
+                return `
+                    <div class="leaderboard-entry" onclick="window.location.href='tipster.html?page=${tipster.page_name}'">
+                        <div class="rank ${rankClass}">#${rank}</div>
+                        <div class="avatar">
+                            ${tipster.avatar_url ? `<img src="${tipster.avatar_url}" alt="">` : displayName.charAt(0).toUpperCase()}
+                        </div>
+                        <div class="info">
+                            <div class="name">
+                                ${escapeHtml(displayName)}
+                                ${isVerified ? '<span class="verified-badge">✓ Verified</span>' : ''}
+                            </div>
+                            <div class="page-name">@${escapeHtml(tipster.page_name)}</div>
+                            <div class="stats">
+                                <span class="stat">🏆 <strong>${Math.round(stats.win_rate || 0)}%</strong> WR</span>
+                                <span class="stat">📊 <strong>${stats.total_picks || 0}</strong> picks</span>
+                                <span class="stat">💰 <strong>$${(stats.total_profit || 0).toLocaleString()}</strong></span>
+                            </div>
+                        </div>
+                        <div class="trend-icon">→</div>
+                    </div>
+                `;
+            }).join('');
+            
+            const titleHtml = currentTab === 'winrate' ? 
+                '<div style="padding: 8px 16px 0; font-size: 0.75rem; color: #8e8e9a;">Based on last 90 days • Minimum 5 picks</div>' : '';
+            
+            container.innerHTML = podiumHtml + titleHtml + listHtml;
+            
+            if (rest.length === 0 && top3.length < 3) {
+                // Just show list without podium
+                const allListHtml = sortedTipsters.map((tipster, idx) => {
+                    const rank = idx + 1;
+                    const displayName = tipster.display_name || tipster.username || 'Tipster';
+                    const isVerified = tipster.verification_status === 'verified';
+                    const stats = tipster.stats;
+                    
+                    let rankClass = '';
+                    if (rank === 1) rankClass = 'top1';
+                    else if (rank === 2) rankClass = 'top2';
+                    else if (rank === 3) rankClass = 'top3';
+                    
+                    return `
+                        <div class="leaderboard-entry" onclick="window.location.href='tipster.html?page=${tipster.page_name}'">
+                            <div class="rank ${rankClass}">#${rank}</div>
+                            <div class="avatar">
+                                ${tipster.avatar_url ? `<img src="${tipster.avatar_url}" alt="">` : displayName.charAt(0).toUpperCase()}
+                            </div>
+                            <div class="info">
+                                <div class="name">
+                                    ${escapeHtml(displayName)}
+                                    ${isVerified ? '<span class="verified-badge">✓ Verified</span>' : ''}
+                                </div>
+                                <div class="page-name">@${escapeHtml(tipster.page_name)}</div>
+                                <div class="stats">
+                                    <span class="stat">🏆 <strong>${Math.round(stats.win_rate || 0)}%</strong> WR</span>
+                                    <span class="stat">📊 <strong>${stats.total_picks || 0}</strong> picks</span>
+                                </div>
+                            </div>
+                            <div class="trend-icon">→</div>
+                        </div>
+                    `;
+                }).join('');
+                container.innerHTML = titleHtml + allListHtml;
+            }
+        }
+        
+        function renderAvatarHtml(tipster) {
+            const displayName = tipster.display_name || tipster.username || 'Tipster';
+            if (tipster.avatar_url) {
+                return `<img src="${tipster.avatar_url}" alt="">`;
+            }
+            return displayName.charAt(0).toUpperCase();
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+        
+        init();
+    </script>
+</body>
+</html>

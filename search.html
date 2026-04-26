@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Search Tipsters • Ranka</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #0a0c10;
+            color: #fff;
+            line-height: 1.5;
+        }
+
+        .app {
+            max-width: 600px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding-bottom: 70px;
+        }
+
+        .header {
+            position: sticky;
+            top: 0;
+            background: rgba(10, 12, 16, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding: 12px 16px;
+            z-index: 100;
+        }
+
+        .search-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 8px;
+        }
+
+        .search-box {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            background: #1a1c26;
+            border-radius: 30px;
+            padding: 8px 16px;
+            gap: 8px;
+        }
+
+        .search-box span {
+            color: #6b6b7a;
+            font-size: 1rem;
+        }
+
+        .search-box input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        .search-box input::placeholder {
+            color: #4a4a5a;
+        }
+
+        .cancel-btn {
+            background: none;
+            border: none;
+            color: #f5576c;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .tabs {
+            display: flex;
+            padding: 8px 16px;
+            gap: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .tab {
+            padding: 8px 0;
+            font-size: 0.9rem;
+            color: #8e8e9a;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active {
+            color: #f5576c;
+            border-bottom-color: #f5576c;
+        }
+
+        .categories-scroll {
+            padding: 12px 16px;
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .categories-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .filter-chip {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-chip.active {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white;
+        }
+
+        .results-container {
+            padding: 12px;
+        }
+
+        .result-card {
+            background: #12141c;
+            border-radius: 16px;
+            margin-bottom: 12px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .result-card:active {
+            transform: scale(0.98);
+        }
+
+        .result-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .result-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .result-info {
+            flex: 1;
+        }
+
+        .result-name {
+            font-weight: 700;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .verified-badge {
+            background: #1e9eff;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 0.6rem;
+            font-weight: 600;
+        }
+
+        .result-page {
+            font-size: 0.7rem;
+            color: #8e8e9a;
+            margin-top: 2px;
+        }
+
+        .result-stats {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .stat {
+            font-size: 0.7rem;
+            color: #6b6b7a;
+        }
+
+        .stat strong {
+            color: #f5576c;
+        }
+
+        .follow-badge {
+            background: rgba(245, 87, 108, 0.2);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            color: #f5576c;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b6b7a;
+        }
+
+        .empty-state .icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid rgba(245, 87, 108, 0.2);
+            border-top-color: #f5576c;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            padding: 10px 20px;
+            border-radius: 24px;
+            font-size: 0.85rem;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 12, 16, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding: 8px 16px 20px;
+            display: flex;
+            justify-content: space-around;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .bottom-nav a {
+            color: #6b6b7a;
+            text-decoration: none;
+            font-size: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .bottom-nav a.active {
+            color: #f5576c;
+        }
+
+        .bottom-nav span {
+            font-size: 0.65rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <div class="search-container">
+                <button class="back-btn" onclick="history.back()">←</button>
+                <div class="search-box">
+                    <span>🔍</span>
+                    <input type="text" id="searchInput" placeholder="Search tipsters by name or @page..." autocomplete="off">
+                </div>
+                <button class="cancel-btn" onclick="clearSearch()">Cancel</button>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="tipsters" onclick="switchTab('tipsters')">👤 Tipsters</div>
+            <div class="tab" data-tab="trending" onclick="switchTab('trending')">🔥 Trending</div>
+            <div class="tab" data-tab="recent" onclick="switchTab('recent')">🕐 Recent</div>
+        </div>
+
+        <div id="categoriesFilter" class="categories-scroll">
+            <div class="filter-chip active" data-category="all">All</div>
+            <div class="filter-chip" data-category="football">⚽ Football</div>
+            <div class="filter-chip" data-category="basketball">🏀 Basketball</div>
+            <div class="filter-chip" data-category="tennis">🎾 Tennis</div>
+            <div class="filter-chip" data-category="mma">🥊 MMA</div>
+            <div class="filter-chip" data-category="esports">🎮 Esports</div>
+        </div>
+
+        <div id="resultsContainer" class="results-container">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading tipsters...</p>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <a href="index.html">🏠<span>Feed</span></a>
+            <a href="search.html" class="active">🔍<span>Search</span></a>
+            <a href="create-prediction.html">➕<span>Tip</span></a>
+            <a href="leaderboard.html">🏆<span>Top</span></a>
+            <a href="profile.html">👤<span>Profile</span></a>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://wmqsephiktkndrzasdam.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndtcXNlcGhpa3RrbmRyemFzZGFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNzk2NDEsImV4cCI6MjA5MjY1NTY0MX0.cpun979RKcODBePmVFij02PPcLwiSTRESrzPkiuTB5I';
+        
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let currentUser = null;
+        let currentTab = 'tipsters';
+        let currentCategory = 'all';
+        let searchQuery = '';
+        let searchTimeout = null;
+        
+        async function init() {
+            const { data: { user } } = await sb.auth.getUser();
+            currentUser = user;
+            
+            setupEventListeners();
+            await loadTipsters();
+        }
+        
+        function setupEventListeners() {
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', (e) => {
+                searchQuery = e.target.value;
+                if (searchTimeout) clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    if (currentTab === 'tipsters') {
+                        loadTipsters();
+                    }
+                }, 300);
+            });
+            
+            document.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    currentCategory = chip.dataset.category;
+                    if (currentTab === 'tipsters') {
+                        loadTipsters();
+                    }
+                });
+            });
+        }
+        
+        async function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
+            
+            const categoryFilter = document.getElementById('categoriesFilter');
+            if (tab === 'tipsters') {
+                categoryFilter.style.display = 'flex';
+                await loadTipsters();
+            } else if (tab === 'trending') {
+                categoryFilter.style.display = 'none';
+                await loadTrending();
+            } else if (tab === 'recent') {
+                categoryFilter.style.display = 'none';
+                await loadRecent();
+            }
+        }
+        
+        async function loadTipsters() {
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Searching...</p></div>';
+            
+            // First get all tipster profiles
+            let query = sb
+                .from('profiles')
+                .select('*')
+                .not('page_name', 'is', null);
+            
+            if (searchQuery) {
+                query = query.or(`display_name.ilike.%${searchQuery}%,page_name.ilike.%${searchQuery}%,username.ilike.%${searchQuery}%`);
+            }
+            
+            const { data: tipsters, error } = await query.order('followers_count', { ascending: false }).limit(50);
+            
+            if (error) {
+                console.error(error);
+                container.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>Error loading tipsters</p></div>`;
+                return;
+            }
+            
+            if (!tipsters || tipsters.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">🔍</div>
+                        <h3>No tipsters found</h3>
+                        <p>Try a different search or category</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Get stats for each tipster
+            const tipsterIds = tipsters.map(t => t.id);
+            const { data: stats } = await sb
+                .from('tipster_stats')
+                .select('*')
+                .in('tipster_id', tipsterIds);
+            
+            const statsMap = {};
+            (stats || []).forEach(s => { statsMap[s.tipster_id] = s; });
+            
+            // Apply category filter if needed
+            let filteredTipsters = tipsters;
+            if (currentCategory !== 'all') {
+                filteredTipsters = await filterByCategory(tipsters, currentCategory);
+            }
+            
+            // Attach stats to tipsters
+            const tipstersWithStats = filteredTipsters.map(t => ({
+                ...t,
+                stats: statsMap[t.id] || { win_rate: 0, total_wins: 0, total_losses: 0, total_picks: 0 }
+            }));
+            
+            renderTipsters(tipstersWithStats);
+        }
+        
+        async function filterByCategory(tipsters, categorySlug) {
+            // Get category ID
+            const { data: category } = await sb
+                .from('categories')
+                .select('id')
+                .eq('slug', categorySlug)
+                .single();
+            
+            if (!category) return tipsters;
+            
+            // Get predictions in this category
+            const { data: predictionsInCategory } = await sb
+                .from('prediction_categories')
+                .select('prediction_id')
+                .eq('category_id', category.id);
+            
+            const predictionIds = (predictionsInCategory || []).map(p => p.prediction_id);
+            
+            if (predictionIds.length === 0) return [];
+            
+            // Get tipsters who have predictions in this category
+            const { data: categoryPredictions } = await sb
+                .from('predictions')
+                .select('tipster_id')
+                .in('id', predictionIds);
+            
+            const tipsterIdsInCategory = [...new Set((categoryPredictions || []).map(p => p.tipster_id))];
+            
+            return tipsters.filter(t => tipsterIdsInCategory.includes(t.id));
+        }
+        
+        async function loadTrending() {
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading top tipsters...</p></div>';
+            
+            // Get tipsters with highest win rate (minimum 5 picks)
+            const { data: stats, error } = await sb
+                .from('tipster_stats')
+                .select('*')
+                .gt('total_picks', 4)
+                .order('win_rate', { ascending: false })
+                .limit(20);
+            
+            if (error || !stats || stats.length === 0) {
+                container.innerHTML = `<div class="empty-state"><div class="icon">🏆</div><p>No trending tipsters yet</p><p style="font-size:0.75rem;">Tipsters need at least 5 picks to appear here</p></div>`;
+                return;
+            }
+            
+            const tipsterIds = stats.map(s => s.tipster_id);
+            const { data: profiles } = await sb
+                .from('profiles')
+                .select('*')
+                .in('id', tipsterIds);
+            
+            const profileMap = {};
+            (profiles || []).forEach(p => { profileMap[p.id] = p; });
+            
+            const combined = stats
+                .filter(s => profileMap[s.tipster_id])
+                .map(s => ({
+                    ...profileMap[s.tipster_id],
+                    stats: {
+                        win_rate: s.win_rate,
+                        total_wins: s.total_wins,
+                        total_losses: s.total_losses,
+                        total_picks: s.total_picks,
+                        total_profit: s.total_profit
+                    }
+                }))
+                .sort((a, b) => (b.stats?.win_rate || 0) - (a.stats?.win_rate || 0));
+            
+            renderTipsters(combined, '🏆 Trending by Win Rate');
+        }
+        
+        async function loadRecent() {
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading recent tipsters...</p></div>';
+            
+            const { data: tipsters, error } = await sb
+                .from('profiles')
+                .select('*')
+                .not('page_name', 'is', null)
+                .order('created_at', { ascending: false })
+                .limit(30);
+            
+            if (error || !tipsters || tipsters.length === 0) {
+                container.innerHTML = `<div class="empty-state"><div class="icon">🕐</div><p>No recent tipsters</p></div>`;
+                return;
+            }
+            
+            // Get stats
+            const tipsterIds = tipsters.map(t => t.id);
+            const { data: stats } = await sb
+                .from('tipster_stats')
+                .select('*')
+                .in('tipster_id', tipsterIds);
+            
+            const statsMap = {};
+            (stats || []).forEach(s => { statsMap[s.tipster_id] = s; });
+            
+            const tipstersWithStats = tipsters.map(t => ({
+                ...t,
+                stats: statsMap[t.id] || { win_rate: 0, total_wins: 0, total_losses: 0, total_picks: 0 }
+            }));
+            
+            renderTipsters(tipstersWithStats, '🆕 New Tipsters');
+        }
+        
+        function renderTipsters(tipsters, title = null) {
+            const container = document.getElementById('resultsContainer');
+            
+            if (tipsters.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">🔍</div>
+                        <h3>No tipsters found</h3>
+                        <p>Try a different category or search term</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            if (title) {
+                html += `<div style="padding: 0 4px 12px 4px; font-size: 0.8rem; color: #8e8e9a;">${title}</div>`;
+            }
+            
+            tipsters.forEach(tipster => {
+                const displayName = tipster.display_name || tipster.username || 'Tipster';
+                const avatarLetter = displayName.charAt(0).toUpperCase();
+                const isVerified = tipster.verification_status === 'verified';
+                const pageName = tipster.page_name;
+                const stats = tipster.stats || {};
+                const winRate = Math.round(stats.win_rate || 0);
+                const totalPicks = stats.total_picks || 0;
+                const followers = tipster.followers_count || 0;
+                
+                html += `
+                    <div class="result-card" onclick="window.location.href='tipster.html?page=${pageName}'">
+                        <div class="result-avatar">
+                            ${tipster.avatar_url ? `<img src="${tipster.avatar_url}" alt="">` : avatarLetter}
+                        </div>
+                        <div class="result-info">
+                            <div class="result-name">
+                                ${escapeHtml(displayName)}
+                                ${isVerified ? '<span class="verified-badge">✓ Verified</span>' : ''}
+                            </div>
+                            <div class="result-page">@${escapeHtml(pageName)}</div>
+                            <div class="result-stats">
+                                <span class="stat">🏆 <strong>${winRate}%</strong> WR</span>
+                                <span class="stat">📊 <strong>${totalPicks}</strong> picks</span>
+                                <span class="stat">👥 <strong>${followers}</strong> followers</span>
+                            </div>
+                        </div>
+                        <div class="follow-badge">→</div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            searchQuery = '';
+            loadTipsters();
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+        
+        init();
+    </script>
+</body>
+</html>

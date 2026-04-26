@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Prediction • Ranka</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #0a0c10;
+            color: #fff;
+            line-height: 1.5;
+        }
+
+        .app {
+            max-width: 600px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding-bottom: 70px;
+        }
+
+        /* Header */
+        .header {
+            position: sticky;
+            top: 0;
+            background: rgba(10, 12, 16, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 8px;
+        }
+
+        .logo {
+            font-size: 1.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            flex: 1;
+        }
+
+        .share-btn {
+            background: none;
+            border: none;
+            color: #8e8e9a;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+
+        /* Prediction Card */
+        .prediction-card {
+            background: #12141c;
+            margin: 12px 16px;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* Tipster Info */
+        .tipster-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .tipster-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            overflow: hidden;
+            flex-shrink: 0;
+            text-decoration: none;
+            color: white;
+        }
+
+        .tipster-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .tipster-details {
+            flex: 1;
+        }
+
+        .tipster-name {
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .tipster-name a {
+            color: white;
+            text-decoration: none;
+        }
+
+        .verified-badge {
+            background: #1e9eff;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 0.6rem;
+            font-weight: 600;
+        }
+
+        .tipster-page {
+            font-size: 0.7rem;
+            color: #8e8e9a;
+            margin-top: 2px;
+        }
+
+        .follow-btn {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            border: none;
+            padding: 6px 16px;
+            border-radius: 20px;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .follow-btn.following {
+            background: transparent;
+            border: 1px solid #f5576c;
+            color: #f5576c;
+        }
+
+        /* Match Info */
+        .match-info {
+            padding: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .match-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .match-date {
+            font-size: 0.75rem;
+            color: #8e8e9a;
+            margin-bottom: 12px;
+        }
+
+        .prediction-value {
+            background: rgba(245, 87, 108, 0.15);
+            border-left: 3px solid #f5576c;
+            padding: 12px;
+            border-radius: 12px;
+            margin: 12px 0;
+        }
+
+        .prediction-label {
+            font-size: 0.7rem;
+            color: #8e8e9a;
+            margin-bottom: 4px;
+        }
+
+        .prediction-text {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #f5576c;
+        }
+
+        .odds-stake {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+        }
+
+        .odds-item {
+            background: #1a1c26;
+            padding: 8px 12px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .odds-label {
+            font-size: 0.65rem;
+            color: #8e8e9a;
+        }
+
+        .odds-value {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+
+        .status-won {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .status-lost {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .status-pending {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        /* Proof Section */
+        .proof-section {
+            padding: 16px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .section-title {
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .proof-images {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .proof-image {
+            aspect-ratio: 1;
+            background: #1a1c26;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .proof-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .proof-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .proof-link {
+            background: rgba(30, 158, 255, 0.1);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            color: #1e9eff;
+            text-decoration: none;
+        }
+
+        /* Action Buttons */
+        .action-bar {
+            display: flex;
+            padding: 12px 16px;
+            gap: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: #8e8e9a;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .action-btn.liked {
+            color: #f5576c;
+        }
+
+        /* Comments Section */
+        .comments-section {
+            padding: 16px;
+        }
+
+        .comment-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .comment-input input {
+            flex: 1;
+            background: #1a1c26;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 24px;
+            padding: 12px 16px;
+            color: white;
+            font-size: 0.85rem;
+        }
+
+        .comment-input input:focus {
+            outline: none;
+            border-color: #f5576c;
+        }
+
+        .comment-input button {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            border: none;
+            padding: 0 20px;
+            border-radius: 24px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .comment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .comment-item {
+            display: flex;
+            gap: 12px;
+        }
+
+        .comment-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .comment-content {
+            flex: 1;
+        }
+
+        .comment-user {
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .comment-text {
+            font-size: 0.85rem;
+            color: #cbd5e1;
+            margin-top: 4px;
+        }
+
+        .comment-time {
+            font-size: 0.65rem;
+            color: #6b6b7a;
+            margin-top: 4px;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #6b6b7a;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 60px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(245, 87, 108, 0.2);
+            border-top-color: #f5576c;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Modal for image */
+        .image-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            display: none;
+        }
+
+        .image-modal img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+
+        /* Bottom nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 12, 16, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding: 8px 16px 20px;
+            display: flex;
+            justify-content: space-around;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .bottom-nav a {
+            color: #6b6b7a;
+            text-decoration: none;
+            font-size: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .bottom-nav a.active {
+            color: #f5576c;
+        }
+
+        .bottom-nav span {
+            font-size: 0.65rem;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            padding: 10px 20px;
+            border-radius: 24px;
+            font-size: 0.85rem;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <button class="back-btn" onclick="history.back()">←</button>
+            <div class="logo">Prediction</div>
+            <button class="share-btn" onclick="sharePrediction()">🔗</button>
+        </div>
+
+        <div id="content">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading prediction...</p>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <a href="index.html">🏠<span>Feed</span></a>
+            <a href="search.html">🔍<span>Search</span></a>
+            <a href="create-prediction.html">➕<span>Tip</span></a>
+            <a href="leaderboard.html">🏆<span>Top</span></a>
+            <a href="profile.html">👤<span>Profile</span></a>
+        </div>
+    </div>
+
+    <div class="image-modal" id="imageModal" onclick="closeModal()">
+        <img id="modalImage" src="">
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://wmqsephiktkndrzasdam.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndtcXNlcGhpa3RrbmRyemFzZGFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNzk2NDEsImV4cCI6MjA5MjY1NTY0MX0.cpun979RKcODBePmVFij02PPcLwiSTRESrzPkiuTB5I';
+        
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let currentUser = null;
+        let prediction = null;
+        let tipster = null;
+        let comments = [];
+        let userVote = null;
+        let isFollowing = false;
+        
+        async function init() {
+            const { data: { user } } = await sb.auth.getUser();
+            currentUser = user;
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const predictionId = urlParams.get('id');
+            
+            if (!predictionId) {
+                document.getElementById('content').innerHTML = `
+                    <div class="empty-state">
+                        <div style="font-size: 3rem;">❌</div>
+                        <h3>No prediction found</h3>
+                        <a href="index.html" style="color: #f5576c;">Back to Feed</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            await loadPrediction(predictionId);
+        }
+        
+        async function loadPrediction(predictionId) {
+            const { data, error } = await sb
+                .from('predictions')
+                .select('*')
+                .eq('id', predictionId)
+                .single();
+            
+            if (error || !data) {
+                document.getElementById('content').innerHTML = `
+                    <div class="empty-state">
+                        <div style="font-size: 3rem;">📭</div>
+                        <h3>Prediction not found</h3>
+                        <p>It may have been deleted or never existed.</p>
+                        <a href="index.html" style="color: #f5576c;">Back to Feed</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            prediction = data;
+            
+            // Load tipster profile
+            const { data: tipsterData } = await sb
+                .from('profiles')
+                .select('*')
+                .eq('id', prediction.tipster_id)
+                .single();
+            tipster = tipsterData;
+            
+            // Load vote counts
+            const { count: upCount } = await sb
+                .from('votes')
+                .select('*', { count: 'exact', head: true })
+                .eq('prediction_id', prediction.id)
+                .eq('vote_type', 'up');
+            
+            const { count: downCount } = await sb
+                .from('votes')
+                .select('*', { count: 'exact', head: true })
+                .eq('prediction_id', prediction.id)
+                .eq('vote_type', 'down');
+            
+            prediction.upvotes = upCount || 0;
+            prediction.downvotes = downCount || 0;
+            
+            // Load user's vote
+            if (currentUser) {
+                const { data: voteData } = await sb
+                    .from('votes')
+                    .select('vote_type')
+                    .eq('prediction_id', prediction.id)
+                    .eq('user_id', currentUser.id)
+                    .maybeSingle();
+                userVote = voteData?.vote_type || null;
+                
+                // Check if following
+                const { data: followData } = await sb
+                    .from('follows')
+                    .select('id')
+                    .eq('follower_id', currentUser.id)
+                    .eq('following_id', tipster?.id)
+                    .maybeSingle();
+                isFollowing = !!followData;
+            }
+            
+            await loadComments();
+            renderPage();
+        }
+        
+        async function loadComments() {
+            const { data, error } = await sb
+                .from('comments')
+                .select(`
+                    *,
+                    user:user_id (id, username, display_name, avatar_url)
+                `)
+                .eq('prediction_id', prediction.id)
+                .order('created_at', { ascending: false });
+            
+            if (!error) {
+                comments = data || [];
+            }
+        }
+        
+        function renderPage() {
+            const container = document.getElementById('content');
+            
+            const isOwnPrediction = currentUser && tipster && currentUser.id === tipster.id;
+            const isVerified = tipster?.verification_status === 'verified';
+            const displayName = tipster?.display_name || tipster?.username || 'Tipster';
+            const avatarLetter = displayName.charAt(0).toUpperCase();
+            
+            let statusClass = '';
+            let statusText = '';
+            if (prediction.status === 'won') {
+                statusClass = 'status-won';
+                statusText = '✅ This prediction WON';
+            } else if (prediction.status === 'lost') {
+                statusClass = 'status-lost';
+                statusText = '❌ This prediction LOST';
+            } else {
+                statusClass = 'status-pending';
+                statusText = '⏳ Awaiting result';
+            }
+            
+            const proofImages = prediction.proof_image_urls || [];
+            const proofLinks = prediction.proof_links || [];
+            
+            const imagesHtml = proofImages.length > 0 ? `
+                <div class="proof-images">
+                    ${proofImages.map(img => `
+                        <div class="proof-image" onclick="openImage('${img}')">
+                            <img src="${img}" alt="Proof" loading="lazy">
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '';
+            
+            const linksHtml = proofLinks.length > 0 ? `
+                <div class="proof-links">
+                    ${proofLinks.map(link => `
+                        <a href="${link}" class="proof-link" target="_blank" rel="noopener">🔗 View Bet Slip</a>
+                    `).join('')}
+                </div>
+            ` : '';
+            
+            const commentsHtml = comments.length > 0 ? comments.map(comment => {
+                const commentUser = comment.user;
+                const commentName = commentUser?.display_name || commentUser?.username || 'User';
+                const commentAvatar = commentName.charAt(0).toUpperCase();
+                return `
+                    <div class="comment-item">
+                        <div class="comment-avatar">${commentAvatar}</div>
+                        <div class="comment-content">
+                            <div class="comment-user">${escapeHtml(commentName)}</div>
+                            <div class="comment-text">${escapeHtml(comment.content)}</div>
+                            <div class="comment-time">${timeAgo(comment.created_at)}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('') : '<div class="empty-state" style="padding: 20px;">No comments yet. Be the first!</div>';
+            
+            container.innerHTML = `
+                <div class="prediction-card">
+                    <div class="tipster-info">
+                        <a href="tipster.html?page=${tipster?.page_name || ''}" class="tipster-avatar">
+                            ${tipster?.avatar_url ? `<img src="${tipster.avatar_url}" alt="">` : avatarLetter}
+                        </a>
+                        <div class="tipster-details">
+                            <div class="tipster-name">
+                                <a href="tipster.html?page=${tipster?.page_name || ''}">${escapeHtml(displayName)}</a>
+                                ${isVerified ? '<span class="verified-badge">✓ Verified</span>' : ''}
+                            </div>
+                            <div class="tipster-page">@${escapeHtml(tipster?.page_name || 'tipster')}</div>
+                        </div>
+                        ${!isOwnPrediction && currentUser ? `
+                            <button class="follow-btn ${isFollowing ? 'following' : ''}" onclick="toggleFollow()">
+                                ${isFollowing ? 'Following' : 'Follow'}
+                            </button>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="match-info">
+                        <div class="match-name">${escapeHtml(prediction.match_name)}</div>
+                        <div class="match-date">${prediction.match_date ? new Date(prediction.match_date).toLocaleString() : 'Date TBD'}</div>
+                        
+                        <div class="prediction-value">
+                            <div class="prediction-label">🎯 Prediction</div>
+                            <div class="prediction-text">${escapeHtml(prediction.prediction_value || prediction.prediction_type || 'Pick')}</div>
+                        </div>
+                        
+                        <div class="odds-stake">
+                            ${prediction.odds ? `
+                                <div class="odds-item">
+                                    <div class="odds-label">Odds</div>
+                                    <div class="odds-value">${prediction.odds}</div>
+                                </div>
+                            ` : ''}
+                            ${prediction.stake ? `
+                                <div class="odds-item">
+                                    <div class="odds-label">Stake</div>
+                                    <div class="odds-value">$${prediction.stake}</div>
+                                </div>
+                            ` : ''}
+                            ${prediction.potential_return ? `
+                                <div class="odds-item">
+                                    <div class="odds-label">Potential Return</div>
+                                    <div class="odds-value">$${prediction.potential_return}</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                        
+                        <div class="status-badge ${statusClass}">${statusText}</div>
+                        
+                        ${prediction.description ? `
+                            <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.05);">
+                                <div class="prediction-label">📝 Analysis</div>
+                                <div style="font-size: 0.85rem; color: #cbd5e1; margin-top: 6px;">${escapeHtml(prediction.description)}</div>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    ${(proofImages.length > 0 || proofLinks.length > 0) ? `
+                        <div class="proof-section">
+                            <div class="section-title">
+                                <span>📸</span> Proof of Winning
+                                <span style="font-size: 0.65rem; color: #10b981;">✓ Verified by Ranka</span>
+                            </div>
+                            ${imagesHtml}
+                            ${linksHtml}
+                        </div>
+                    ` : ''}
+                    
+                    <div class="action-bar">
+                        <button class="action-btn ${userVote === 'up' ? 'liked' : ''}" onclick="handleVote('up')">
+                            ${userVote === 'up' ? '❤️' : '🤍'} ${prediction.upvotes || 0}
+                        </button>
+                        <button class="action-btn" onclick="handleVote('down')">
+                            👎 ${prediction.downvotes || 0}
+                        </button>
+                        <button class="action-btn" onclick="sharePrediction()">
+                            🔗 Share
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="comments-section">
+                    <div class="section-title">💬 Comments (${comments.length})</div>
+                    ${currentUser ? `
+                        <div class="comment-input">
+                            <input type="text" id="commentInput" placeholder="Write a comment...">
+                            <button onclick="postComment()">Post</button>
+                        </div>
+                    ` : `
+                        <div class="empty-state" style="padding: 12px;">
+                            <a href="login.html?redirect=prediction.html?id=${prediction.id}" style="color: #f5576c;">Login to comment</a>
+                        </div>
+                    `}
+                    <div class="comment-list" id="commentList">
+                        ${commentsHtml}
+                    </div>
+                </div>
+            `;
+        }
+        
+        async function handleVote(voteType) {
+            if (!currentUser) {
+                showToast('Login to vote');
+                window.location.href = `login.html?redirect=prediction.html?id=${prediction.id}`;
+                return;
+            }
+            
+            const currentVote = userVote;
+            
+            if (currentVote === voteType) {
+                // Remove vote
+                await sb
+                    .from('votes')
+                    .delete()
+                    .eq('prediction_id', prediction.id)
+                    .eq('user_id', currentUser.id);
+                userVote = null;
+                if (voteType === 'up') prediction.upvotes--;
+                else prediction.downvotes--;
+            } else {
+                // Remove old vote if exists
+                if (currentVote) {
+                    await sb
+                        .from('votes')
+                        .delete()
+                        .eq('prediction_id', prediction.id)
+                        .eq('user_id', currentUser.id);
+                    if (currentVote === 'up') prediction.upvotes--;
+                    else prediction.downvotes--;
+                }
+                
+                // Add new vote
+                await sb
+                    .from('votes')
+                    .insert({
+                        prediction_id: prediction.id,
+                        user_id: currentUser.id,
+                        vote_type: voteType
+                    });
+                userVote = voteType;
+                if (voteType === 'up') prediction.upvotes++;
+                else prediction.downvotes++;
+            }
+            
+            // Update UI
+            const upBtn = document.querySelector('.action-btn:first-child');
+            const downBtn = document.querySelector('.action-btn:nth-child(2)');
+            if (upBtn) {
+                upBtn.innerHTML = `${userVote === 'up' ? '❤️' : '🤍'} ${prediction.upvotes}`;
+                if (userVote === 'up') upBtn.classList.add('liked');
+                else upBtn.classList.remove('liked');
+            }
+            if (downBtn) {
+                downBtn.innerHTML = `👎 ${prediction.downvotes}`;
+            }
+        }
+        
+        async function toggleFollow() {
+            if (!currentUser) {
+                showToast('Login to follow');
+                window.location.href = `login.html?redirect=prediction.html?id=${prediction.id}`;
+                return;
+            }
+            
+            if (isFollowing) {
+                await sb
+                    .from('follows')
+                    .delete()
+                    .eq('follower_id', currentUser.id)
+                    .eq('following_id', tipster.id);
+                isFollowing = false;
+            } else {
+                await sb
+                    .from('follows')
+                    .insert({ follower_id: currentUser.id, following_id: tipster.id });
+                isFollowing = true;
+            }
+            
+            const followBtn = document.querySelector('.follow-btn');
+            if (followBtn) {
+                followBtn.textContent = isFollowing ? 'Following' : 'Follow';
+                followBtn.className = isFollowing ? 'follow-btn following' : 'follow-btn';
+            }
+            
+            showToast(isFollowing ? 'Following!' : 'Unfollowed');
+        }
+        
+        async function postComment() {
+            const input = document.getElementById('commentInput');
+            const content = input.value.trim();
+            
+            if (!content) {
+                showToast('Please enter a comment');
+                return;
+            }
+            
+            if (!currentUser) {
+                showToast('Login to comment');
+                window.location.href = `login.html?redirect=prediction.html?id=${prediction.id}`;
+                return;
+            }
+            
+            const { data, error } = await sb
+                .from('comments')
+                .insert({
+                    prediction_id: prediction.id,
+                    user_id: currentUser.id,
+                    content: content
+                })
+                .select()
+                .single();
+            
+            if (error) {
+                showToast('Error posting comment');
+                return;
+            }
+            
+            input.value = '';
+            await loadComments();
+            
+            // Re-render comments section
+            const commentList = document.getElementById('commentList');
+            const commentUser = currentUser;
+            const commentName = commentUser?.email?.split('@')[0] || 'User';
+            const commentAvatar = commentName.charAt(0).toUpperCase();
+            
+            const newCommentHtml = `
+                <div class="comment-item">
+                    <div class="comment-avatar">${commentAvatar}</div>
+                    <div class="comment-content">
+                        <div class="comment-user">${escapeHtml(commentName)}</div>
+                        <div class="comment-text">${escapeHtml(content)}</div>
+                        <div class="comment-time">just now</div>
+                    </div>
+                </div>
+            `;
+            
+            if (commentList.innerHTML.includes('No comments yet')) {
+                commentList.innerHTML = newCommentHtml;
+            } else {
+                commentList.insertAdjacentHTML('afterbegin', newCommentHtml);
+            }
+            
+            showToast('Comment posted!');
+        }
+        
+        function sharePrediction() {
+            const url = `${window.location.origin}/prediction.html?id=${prediction.id}`;
+            if (navigator.share) {
+                navigator.share({
+                    title: `${prediction.match_name} prediction`,
+                    text: `Check out this prediction: ${prediction.prediction_value}`,
+                    url: url
+                });
+            } else {
+                navigator.clipboard.writeText(url);
+                showToast('Link copied! Share with friends');
+            }
+        }
+        
+        function openImage(url) {
+            const modal = document.getElementById('imageModal');
+            const img = document.getElementById('modalImage');
+            img.src = url;
+            modal.style.display = 'flex';
+        }
+        
+        function closeModal() {
+            document.getElementById('imageModal').style.display = 'none';
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function timeAgo(date) {
+            const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+            if (seconds < 60) return 'just now';
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `${minutes}m ago`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours}h ago`;
+            const days = Math.floor(hours / 24);
+            if (days < 7) return `${days}d ago`;
+            return new Date(date).toLocaleDateString();
+        }
+        
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+        
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>My Profile • Ranka</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #0a0c10;
+            color: #fff;
+            line-height: 1.5;
+        }
+
+        .app {
+            max-width: 600px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding-bottom: 70px;
+        }
+
+        /* Header */
+        .header {
+            position: sticky;
+            top: 0;
+            background: rgba(10, 12, 16, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .settings-btn {
+            background: none;
+            border: none;
+            color: #8e8e9a;
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 8px;
+        }
+
+        /* Profile Card */
+        .profile-card {
+            background: #12141c;
+            margin: 20px 16px;
+            border-radius: 24px;
+            padding: 24px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0 auto 16px;
+            overflow: hidden;
+        }
+
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .profile-email {
+            font-size: 0.8rem;
+            color: #8e8e9a;
+            margin-bottom: 16px;
+        }
+
+        .profile-bio {
+            font-size: 0.9rem;
+            color: #cbd5e1;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        /* Stats Row */
+        .stats-row {
+            display: flex;
+            justify-content: space-around;
+            padding: 16px 0;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #f5576c;
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
+            color: #8e8e9a;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .action-btn {
+            background: rgba(255,255,255,0.05);
+            border: none;
+            padding: 14px;
+            border-radius: 30px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.95rem;
+        }
+
+        .action-btn.primary {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+
+        .action-btn.warning {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+
+        /* Tips Section */
+        .tips-section {
+            margin: 0 16px 20px;
+        }
+
+        .section-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #8e8e9a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tips-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .tip-card {
+            background: #12141c;
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .tip-icon {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        .tip-title {
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+        }
+
+        .tip-desc {
+            font-size: 0.7rem;
+            color: #6b6b7a;
+        }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 12, 16, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding: 8px 16px 20px;
+            display: flex;
+            justify-content: space-around;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .bottom-nav a {
+            color: #6b6b7a;
+            text-decoration: none;
+            font-size: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .bottom-nav a.active {
+            color: #f5576c;
+        }
+
+        .bottom-nav span {
+            font-size: 0.65rem;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 60px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(245, 87, 108, 0.2);
+            border-top-color: #f5576c;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Login Prompt */
+        .login-prompt {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .login-prompt .icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+
+        .login-prompt h3 {
+            margin-bottom: 8px;
+        }
+
+        .login-prompt p {
+            color: #8e8e9a;
+            margin-bottom: 24px;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            padding: 10px 20px;
+            border-radius: 24px;
+            font-size: 0.85rem;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <div class="logo">My Profile</div>
+            <button class="settings-btn" onclick="window.location.href='setup-profile.html'">⚙️</button>
+        </div>
+
+        <div id="profileContent">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading profile...</p>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <a href="index.html">🏠<span>Feed</span></a>
+            <a href="search.html">🔍<span>Search</span></a>
+            <a href="create-prediction.html">➕<span>Tip</span></a>
+            <a href="leaderboard.html">🏆<span>Top</span></a>
+            <a href="profile.html" class="active">👤<span>Profile</span></a>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://wmqsephiktkndrzasdam.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndtcXNlcGhpa3RrbmRyemFzZGFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNzk2NDEsImV4cCI6MjA5MjY1NTY0MX0.cpun979RKcODBePmVFij02PPcLwiSTRESrzPkiuTB5I';
+        
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let currentUser = null;
+        let userProfile = null;
+        let isTipster = false;
+        
+        async function init() {
+            const { data: { user } } = await sb.auth.getUser();
+            
+            if (!user) {
+                renderLoginPrompt();
+                return;
+            }
+            
+            currentUser = user;
+            await loadProfile();
+            renderProfile();
+        }
+        
+        async function loadProfile() {
+            const { data: profile, error } = await sb
+                .from('profiles')
+                .select('*')
+                .eq('id', currentUser.id)
+                .maybeSingle();
+            
+            if (error) {
+                console.error(error);
+            }
+            
+            userProfile = profile;
+            
+            if (userProfile && userProfile.page_name) {
+                isTipster = true;
+            }
+        }
+        
+        function renderProfile() {
+            const container = document.getElementById('profileContent');
+            
+            const displayName = userProfile?.display_name || currentUser.email?.split('@')[0] || 'User';
+            const avatarLetter = displayName.charAt(0).toUpperCase();
+            const avatarUrl = userProfile?.avatar_url;
+            const bio = userProfile?.bio;
+            const followers = userProfile?.followers_count || 0;
+            
+            // Count user's following
+            let followingCount = 0;
+            if (currentUser) {
+                // We'll fetch this asynchronously
+                loadFollowingCount().then(count => {
+                    if (followingCountElement) {
+                        followingCountElement.textContent = count;
+                    }
+                });
+            }
+            
+            container.innerHTML = `
+                <div class="profile-card">
+                    <div class="profile-avatar">
+                        ${avatarUrl ? `<img src="${avatarUrl}" alt="Avatar">` : avatarLetter}
+                    </div>
+                    <div class="profile-name">${escapeHtml(displayName)}</div>
+                    <div class="profile-email">${escapeHtml(currentUser.email || '')}</div>
+                    ${bio ? `<div class="profile-bio">${escapeHtml(bio)}</div>` : ''}
+                    
+                    <div class="stats-row">
+                        <div class="stat-item">
+                            <div class="stat-number" id="followersCount">${followers}</div>
+                            <div class="stat-label">Followers</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="followingCount">--</div>
+                            <div class="stat-label">Following</div>
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        ${isTipster ? `
+                            <button class="action-btn primary" onclick="window.location.href='dashboard.html'">
+                                📊 Go to Dashboard
+                            </button>
+                            <button class="action-btn" onclick="window.location.href='tipster.html?page=${userProfile.page_name}'">
+                                👤 View Public Profile
+                            </button>
+                        ` : `
+                            <button class="action-btn primary" onclick="window.location.href='setup-profile.html'">
+                                🚀 Become a Tipster
+                            </button>
+                        `}
+                        <button class="action-btn warning" onclick="logout()">
+                            🚪 Logout
+                        </button>
+                    </div>
+                </div>
+                
+                ${!isTipster ? `
+                    <div class="tips-section">
+                        <div class="section-title">
+                            <span>💡</span> Why become a tipster?
+                        </div>
+                        <div class="tips-grid">
+                            <div class="tip-card">
+                                <div class="tip-icon">💰</div>
+                                <div class="tip-title">Earn from tips</div>
+                                <div class="tip-desc">Get paid when followers win</div>
+                            </div>
+                            <div class="tip-card">
+                                <div class="tip-icon">👥</div>
+                                <div class="tip-title">Build following</div>
+                                <div class="tip-desc">Grow your audience</div>
+                            </div>
+                            <div class="tip-card">
+                                <div class="tip-icon">✅</div>
+                                <div class="tip-title">Get verified</div>
+                                <div class="tip-desc">Show you're legit</div>
+                            </div>
+                            <div class="tip-card">
+                                <div class="tip-icon">📊</div>
+                                <div class="tip-title">Track stats</div>
+                                <div class="tip-desc">See your win rate</div>
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+            
+            // Store reference for following count update
+            const followingCountElement = document.getElementById('followingCount');
+        }
+        
+        async function loadFollowingCount() {
+            if (!currentUser) return 0;
+            
+            const { count } = await sb
+                .from('follows')
+                .select('*', { count: 'exact', head: true })
+                .eq('follower_id', currentUser.id);
+            
+            return count || 0;
+        }
+        
+        function renderLoginPrompt() {
+            const container = document.getElementById('profileContent');
+            container.innerHTML = `
+                <div class="login-prompt">
+                    <div class="icon">👤</div>
+                    <h3>Not logged in</h3>
+                    <p>Login or create an account to access your profile</p>
+                    <div class="action-buttons" style="max-width: 300px; margin: 0 auto;">
+                        <button class="action-btn primary" onclick="window.location.href='login.html'">Login</button>
+                        <button class="action-btn" onclick="window.location.href='login.html'">Create Account</button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        async function logout() {
+            await sb.auth.signOut();
+            window.location.href = 'login.html';
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+        
+        init();
+    </script>
+</body>
+</html>

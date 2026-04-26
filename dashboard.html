@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Dashboard • Prediction-v Tipster</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #0a0c10;
+            color: #fff;
+            line-height: 1.5;
+        }
+
+        .app {
+            max-width: 600px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding-bottom: 70px;
+        }
+
+        /* Header */
+        .header {
+            position: sticky;
+            top: 0;
+            background: rgba(10, 12, 16, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .profile-icon {
+            background: none;
+            border: none;
+            color: #8e8e9a;
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 8px;
+        }
+
+        /* Welcome Banner */
+        .welcome-banner {
+            background: linear-gradient(135deg, #1a1c26, #12141c);
+            margin: 16px;
+            padding: 20px;
+            border-radius: 24px;
+            border: 1px solid rgba(245, 87, 108, 0.2);
+        }
+
+        .welcome-text {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .welcome-sub {
+            font-size: 0.8rem;
+            color: #8e8e9a;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            padding: 0 16px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #12141c;
+            border-radius: 20px;
+            padding: 16px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #f5576c;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: #8e8e9a;
+            margin-top: 4px;
+        }
+
+        /* Quick Actions */
+        .section-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 0 16px;
+            margin-bottom: 12px;
+            color: #8e8e9a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            padding: 0 16px;
+            margin-bottom: 24px;
+        }
+
+        .action-card {
+            background: #12141c;
+            border-radius: 16px;
+            padding: 16px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid rgba(255,255,255,0.05);
+            text-decoration: none;
+            color: white;
+            display: block;
+        }
+
+        .action-card:active {
+            transform: scale(0.96);
+        }
+
+        .action-icon {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        .action-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .action-desc {
+            font-size: 0.6rem;
+            color: #6b6b7a;
+            margin-top: 4px;
+        }
+
+        /* Recent Items */
+        .recent-section {
+            margin-bottom: 20px;
+        }
+
+        .recent-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 16px;
+            margin-bottom: 12px;
+        }
+
+        .recent-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #8e8e9a;
+        }
+
+        .view-all {
+            font-size: 0.7rem;
+            color: #f5576c;
+            text-decoration: none;
+        }
+
+        .recent-list {
+            padding: 0 16px;
+        }
+
+        .recent-item {
+            background: #12141c;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .recent-item:active {
+            transform: scale(0.98);
+        }
+
+        .recent-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(245, 87, 108, 0.15);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .recent-info {
+            flex: 1;
+        }
+
+        .recent-title-text {
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 2px;
+        }
+
+        .recent-meta {
+            font-size: 0.65rem;
+            color: #6b6b7a;
+        }
+
+        .recent-status {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 20px;
+        }
+
+        .status-won {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .status-lost {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .status-pending {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #6b6b7a;
+            background: #12141c;
+            border-radius: 16px;
+        }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 12, 16, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding: 8px 16px 20px;
+            display: flex;
+            justify-content: space-around;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .bottom-nav a {
+            color: #6b6b7a;
+            text-decoration: none;
+            font-size: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .bottom-nav a.active {
+            color: #f5576c;
+        }
+
+        .bottom-nav span {
+            font-size: 0.65rem;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 60px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(245, 87, 108, 0.2);
+            border-top-color: #f5576c;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            padding: 10px 20px;
+            border-radius: 24px;
+            font-size: 0.85rem;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        /* Warning Box */
+        .warning-box {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px 16px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <div class="logo">Predictiom-V</div>
+            <button class="profile-icon" onclick="window.location.href='profile.html'">👤</button>
+        </div>
+
+        <div id="dashboardContent">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading dashboard...</p>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <a href="dashboard.html" class="active">📊<span>Dashboard</span></a>
+            <a href="index.html">🏠<span>Feed</span></a>
+            <a href="search.html">🔍<span>Search</span></a>
+            <a href="leaderboard.html">🏆<span>Top</span></a>
+            <a href="profile.html">👤<span>Profile</span></a>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://wmqsephiktkndrzasdam.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndtcXNlcGhpa3RrbmRyemFzZGFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNzk2NDEsImV4cCI6MjA5MjY1NTY0MX0.cpun979RKcODBePmVFij02PPcLwiSTRESrzPkiuTB5I';
+        
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let currentUser = null;
+        let tipsterProfile = null;
+        let recentPosts = [];
+        let recentPredictions = [];
+        let recentStories = [];
+        
+        async function init() {
+            const { data: { user } } = await sb.auth.getUser();
+            if (!user) {
+                window.location.href = 'login.html?redirect=dashboard.html';
+                return;
+            }
+            currentUser = user;
+            
+            await loadTipsterProfile();
+        }
+        
+        async function loadTipsterProfile() {
+            const { data: profile, error } = await sb
+                .from('profiles')
+                .select('*')
+                .eq('id', currentUser.id)
+                .maybeSingle();
+            
+            if (error) {
+                console.error(error);
+                showError('Error loading profile');
+                return;
+            }
+            
+            if (!profile || !profile.page_name) {
+                // User is not a tipster - show setup prompt
+                document.getElementById('dashboardContent').innerHTML = `
+                    <div class="warning-box">
+                        <div style="font-size: 3rem; margin-bottom: 12px;">⚠️</div>
+                        <h3>Not a Tipster Yet</h3>
+                        <p style="margin: 12px 0; color: #8e8e9a;">You need to become a tipster to access the dashboard.</p>
+                        <a href="setup-profile.html" class="btn-primary" style="display: inline-block; width: auto; padding: 12px 24px; background: linear-gradient(135deg, #f093fb, #f5576c); border-radius: 30px; text-decoration: none; color: white;">Become a Tipster →</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            tipsterProfile = profile;
+            await loadStats();
+            await loadRecentPosts();
+            await loadRecentPredictions();
+            await loadRecentStories();
+            renderDashboard();
+        }
+        
+        async function loadStats() {
+            // Get predictions stats
+            const { data: predictions } = await sb
+                .from('predictions')
+                .select('status, stake, potential_return')
+                .eq('tipster_id', currentUser.id);
+            
+            const wins = (predictions || []).filter(p => p.status === 'won').length;
+            const losses = (predictions || []).filter(p => p.status === 'lost').length;
+            const pending = (predictions || []).filter(p => p.status === 'pending').length;
+            const totalPicks = (predictions || []).length;
+            const winRate = totalPicks > 0 ? Math.round((wins / totalPicks) * 100) : 0;
+            
+            // Get posts count
+            const { count: postsCount } = await sb
+                .from('posts')
+                .select('*', { count: 'exact', head: true })
+                .eq('tipster_id', currentUser.id);
+            
+            // Get stories count
+            const { count: storiesCount } = await sb
+                .from('stories')
+                .select('*', { count: 'exact', head: true })
+                .eq('tipster_id', currentUser.id)
+                .gte('expires_at', new Date().toISOString());
+            
+            // Get followers count
+            const { count: followersCount } = await sb
+                .from('follows')
+                .select('*', { count: 'exact', head: true })
+                .eq('following_id', currentUser.id);
+            
+            tipsterProfile.stats = {
+                wins, losses, pending, totalPicks, winRate,
+                postsCount: postsCount || 0,
+                storiesCount: storiesCount || 0,
+                followersCount: followersCount || 0
+            };
+        }
+        
+        async function loadRecentPosts() {
+            const { data: posts } = await sb
+                .from('posts')
+                .select('*')
+                .eq('tipster_id', currentUser.id)
+                .order('created_at', { ascending: false })
+                .limit(5);
+            
+            recentPosts = posts || [];
+        }
+        
+        async function loadRecentPredictions() {
+            const { data: predictions } = await sb
+                .from('predictions')
+                .select('*')
+                .eq('tipster_id', currentUser.id)
+                .order('created_at', { ascending: false })
+                .limit(5);
+            
+            recentPredictions = predictions || [];
+        }
+        
+        async function loadRecentStories() {
+            const { data: stories } = await sb
+                .from('stories')
+                .select('*')
+                .eq('tipster_id', currentUser.id)
+                .gte('expires_at', new Date().toISOString())
+                .order('created_at', { ascending: false })
+                .limit(3);
+            
+            recentStories = stories || [];
+        }
+        
+        function renderDashboard() {
+            const container = document.getElementById('dashboardContent');
+            const stats = tipsterProfile.stats;
+            const displayName = tipsterProfile.display_name || tipsterProfile.username;
+            
+            container.innerHTML = `
+                <div class="welcome-banner">
+                    <div class="welcome-text">Welcome back, ${escapeHtml(displayName)}!</div>
+                    <div class="welcome-sub">@${escapeHtml(tipsterProfile.page_name)} • ${stats.followersCount} followers</div>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.totalPicks}</div>
+                        <div class="stat-label">Total Picks</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.winRate}%</div>
+                        <div class="stat-label">Win Rate</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.wins}</div>
+                        <div class="stat-label">Wins</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.storiesCount}</div>
+                        <div class="stat-label">Active Stories</div>
+                    </div>
+                </div>
+                
+                <div class="section-title">⚡ Quick Actions</div>
+                <div class="actions-grid">
+                    <div class="action-card" onclick="window.location.href='create-post.html'">
+                        <div class="action-icon">📝</div>
+                        <div class="action-label">Create Post</div>
+                        <div class="action-desc">Share text & image</div>
+                    </div>
+                    <div class="action-card" onclick="window.location.href='create-prediction.html'">
+                        <div class="action-icon">🎯</div>
+                        <div class="action-label">Add Prediction</div>
+                        <div class="action-desc">Match + odds + proof</div>
+                    </div>
+                    <div class="action-card" onclick="window.location.href='create-story.html'">
+                        <div class="action-icon">📸</div>
+                        <div class="action-label">Post Story</div>
+                        <div class="action-desc">24h ephemeral</div>
+                    </div>
+                </div>
+                
+                <div class="recent-section">
+                    <div class="recent-header">
+                        <span class="recent-title">📋 Recent Posts</span>
+                        ${recentPosts.length > 0 ? `<a href="javascript:void(0)" class="view-all" onclick="viewAll('posts')">View all →</a>` : ''}
+                    </div>
+                    <div class="recent-list">
+                        ${renderRecentPosts()}
+                    </div>
+                </div>
+                
+                <div class="recent-section">
+                    <div class="recent-header">
+                        <span class="recent-title">🎯 Recent Predictions</span>
+                        ${recentPredictions.length > 0 ? `<a href="javascript:void(0)" class="view-all" onclick="viewAll('predictions')">View all →</a>` : ''}
+                    </div>
+                    <div class="recent-list">
+                        ${renderRecentPredictions()}
+                    </div>
+                </div>
+                
+                <div class="recent-section">
+                    <div class="recent-header">
+                        <span class="recent-title">⏳ Active Stories</span>
+                        ${recentStories.length > 0 ? `<a href="javascript:void(0)" class="view-all" onclick="viewAll('stories')">View all →</a>` : ''}
+                    </div>
+                    <div class="recent-list">
+                        ${renderRecentStories()}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderRecentPosts() {
+            if (recentPosts.length === 0) {
+                return `
+                    <div class="empty-state">
+                        <div style="font-size: 2rem; margin-bottom: 8px;">📭</div>
+                        <p style="font-size: 0.8rem;">No posts yet. Create your first post!</p>
+                    </div>
+                `;
+            }
+            
+            return recentPosts.map(post => `
+                <div class="recent-item" onclick="window.location.href='tipster.html?page=${tipsterProfile.page_name}'">
+                    <div class="recent-icon">📝</div>
+                    <div class="recent-info">
+                        <div class="recent-title-text">${escapeHtml(post.content.substring(0, 50))}${post.content.length > 50 ? '...' : ''}</div>
+                        <div class="recent-meta">${timeAgo(post.created_at)} • ${post.likes_count || 0} likes</div>
+                    </div>
+                    <div style="font-size: 0.7rem; color: #6b6b7a;">→</div>
+                </div>
+            `).join('');
+        }
+        
+        function renderRecentPredictions() {
+            if (recentPredictions.length === 0) {
+                return `
+                    <div class="empty-state">
+                        <div style="font-size: 2rem; margin-bottom: 8px;">🎯</div>
+                        <p style="font-size: 0.8rem;">No predictions yet. Add your first prediction!</p>
+                    </div>
+                `;
+            }
+            
+            return recentPredictions.map(pred => {
+                let statusClass = '';
+                let statusText = '';
+                if (pred.status === 'won') {
+                    statusClass = 'status-won';
+                    statusText = 'WON';
+                } else if (pred.status === 'lost') {
+                    statusClass = 'status-lost';
+                    statusText = 'LOST';
+                } else {
+                    statusClass = 'status-pending';
+                    statusText = 'PENDING';
+                }
+                
+                return `
+                    <div class="recent-item" onclick="window.location.href='prediction.html?id=${pred.id}'">
+                        <div class="recent-icon">🎯</div>
+                        <div class="recent-info">
+                            <div class="recent-title-text">${escapeHtml(pred.match_name)}</div>
+                            <div class="recent-meta">${timeAgo(pred.created_at)} • ${pred.prediction_value || 'Pick'}</div>
+                        </div>
+                        <div class="recent-status ${statusClass}">${statusText}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function renderRecentStories() {
+            if (recentStories.length === 0) {
+                return `
+                    <div class="empty-state">
+                        <div style="font-size: 2rem; margin-bottom: 8px;">📸</div>
+                        <p style="font-size: 0.8rem;">No active stories. Create a story to engage followers!</p>
+                    </div>
+                `;
+            }
+            
+            return recentStories.map(story => `
+                <div class="recent-item" onclick="window.location.href='story-viewer.html?tipster=${tipsterProfile.page_name}'">
+                    <div class="recent-icon">📸</div>
+                    <div class="recent-info">
+                        <div class="recent-title-text">${escapeHtml(story.prediction_text || 'Story')}</div>
+                        <div class="recent-meta">Expires in ${getTimeLeft(story.expires_at)} • ${story.views_count || 0} views</div>
+                    </div>
+                    <div style="font-size: 0.7rem; color: #6b6b7a;">→</div>
+                </div>
+            `).join('');
+        }
+        
+        function viewAll(type) {
+            if (type === 'posts') {
+                window.location.href = `tipster.html?page=${tipsterProfile.page_name}&tab=posts`;
+            } else if (type === 'predictions') {
+                window.location.href = `tipster.html?page=${tipsterProfile.page_name}&tab=predictions`;
+            } else if (type === 'stories') {
+                window.location.href = `story-viewer.html?tipster=${tipsterProfile.page_name}`;
+            }
+        }
+        
+        function getTimeLeft(expiresAt) {
+            const diff = new Date(expiresAt) - new Date();
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            if (hours > 0) return `${hours}h ${minutes}m`;
+            return `${minutes}m`;
+        }
+        
+        function timeAgo(date) {
+            const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+            if (seconds < 60) return 'just now';
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `${minutes}m ago`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours}h ago`;
+            const days = Math.floor(hours / 24);
+            return `${days}d ago`;
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function showError(message) {
+            document.getElementById('dashboardContent').innerHTML = `
+                <div class="empty-state" style="margin: 20px;">
+                    <div style="font-size: 3rem;">⚠️</div>
+                    <h3>Error</h3>
+                    <p>${escapeHtml(message)}</p>
+                    <a href="index.html" style="color: #f5576c; text-decoration: none;">Back to Home</a>
+                </div>
+            `;
+        }
+        
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+        
+        init();
+    </script>
+</body>
+</html>

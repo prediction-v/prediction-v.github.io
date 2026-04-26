@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Create Story • Ranka</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #0a0c10;
+            color: #fff;
+            line-height: 1.5;
+        }
+
+        .app {
+            max-width: 600px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+
+        /* Header */
+        .header {
+            position: sticky;
+            top: 0;
+            background: rgba(10, 12, 16, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 8px;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            flex: 1;
+        }
+
+        /* Form Sections */
+        .section {
+            background: #12141c;
+            margin: 12px 16px;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .section-header {
+            padding: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-body {
+            padding: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            color: #8e8e9a;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        label .required {
+            color: #f5576c;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            background: #1a1c26;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 12px 14px;
+            color: #fff;
+            font-size: 0.9rem;
+            font-family: inherit;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #f5576c;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .hint {
+            font-size: 0.7rem;
+            color: #6b6b7a;
+            margin-top: 6px;
+        }
+
+        /* Image Upload */
+        .image-upload-area {
+            background: #1a1c26;
+            border: 2px dashed rgba(245, 87, 108, 0.3);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 16px;
+        }
+
+        .image-upload-area:hover {
+            border-color: #f5576c;
+            background: rgba(245, 87, 108, 0.05);
+        }
+
+        .image-preview {
+            margin-top: 16px;
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .image-preview img {
+            width: 100%;
+            max-height: 300px;
+            object-fit: cover;
+            border-radius: 16px;
+        }
+
+        .remove-image {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0,0,0,0.7);
+            border: none;
+            color: #ef4444;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        /* Expiry Selector */
+        .expiry-options {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .expiry-option {
+            flex: 1;
+            background: #1a1c26;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .expiry-option.selected {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            border-color: transparent;
+        }
+
+        .expiry-option .hours {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .expiry-option .label {
+            font-size: 0.7rem;
+            color: #8e8e9a;
+        }
+
+        .expiry-option.selected .label {
+            color: rgba(255,255,255,0.8);
+        }
+
+        /* Preview Card */
+        .preview-card {
+            background: linear-gradient(135deg, #1a1c26, #12141c);
+            border-radius: 20px;
+            overflow: hidden;
+            margin: 12px 16px;
+        }
+
+        .preview-header {
+            padding: 12px 16px;
+            background: rgba(0,0,0,0.3);
+            font-size: 0.8rem;
+            color: #8e8e9a;
+        }
+
+        .preview-content {
+            position: relative;
+        }
+
+        .preview-image {
+            width: 100%;
+            aspect-ratio: 9/16;
+            object-fit: cover;
+            background: #1a1c26;
+        }
+
+        .preview-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            padding: 20px 16px;
+        }
+
+        .preview-prediction {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .preview-odds {
+            font-size: 0.8rem;
+            color: #10b981;
+        }
+
+        /* Submit Button */
+        .submit-section {
+            padding: 16px;
+        }
+
+        .btn-primary {
+            width: 100%;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            border: none;
+            padding: 14px;
+            border-radius: 28px;
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Warning Box */
+        .warning-box {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px 16px;
+            text-align: center;
+        }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 12, 16, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding: 8px 16px 20px;
+            display: flex;
+            justify-content: space-around;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .bottom-nav a {
+            color: #6b6b7a;
+            text-decoration: none;
+            font-size: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .bottom-nav a.active {
+            color: #f5576c;
+        }
+
+        .bottom-nav span {
+            font-size: 0.65rem;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            padding: 10px 20px;
+            border-radius: 24px;
+            font-size: 0.85rem;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .spinner-sm {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <button class="back-btn" onclick="history.back()">←</button>
+            <div class="logo">Create Story</div>
+            <div style="width: 32px;"></div>
+        </div>
+
+        <div id="mainContent">
+            <div class="loading" style="text-align: center; padding: 40px;">
+                <div class="spinner-sm" style="width: 32px; height: 32px;"></div>
+                <p>Loading...</p>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <a href="index.html">🏠<span>Feed</span></a>
+            <a href="search.html">🔍<span>Search</span></a>
+            <a href="create-prediction.html">➕<span>Tip</span></a>
+            <a href="leaderboard.html">🏆<span>Top</span></a>
+            <a href="profile.html">👤<span>Profile</span></a>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://wmqsephiktkndrzasdam.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndtcXNlcGhpa3RrbmRyemFzZGFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNzk2NDEsImV4cCI6MjA5MjY1NTY0MX0.cpun979RKcODBePmVFij02PPcLwiSTRESrzPkiuTB5I';
+        
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let currentUser = null;
+        let tipsterProfile = null;
+        let selectedImageFile = null;
+        let selectedImageUrl = null;
+        let selectedExpiry = 24; // hours
+        let isUploading = false;
+        
+        async function init() {
+            const { data: { user } } = await sb.auth.getUser();
+            if (!user) {
+                window.location.href = 'login.html?redirect=create-story.html';
+                return;
+            }
+            currentUser = user;
+            
+            // Check if user has a tipster profile
+            const { data: profile } = await sb
+                .from('profiles')
+                .select('*')
+                .eq('id', currentUser.id)
+                .maybeSingle();
+            
+            if (!profile || !profile.page_name) {
+                document.getElementById('mainContent').innerHTML = `
+                    <div class="warning-box">
+                        <div style="font-size: 3rem; margin-bottom: 12px;">⚠️</div>
+                        <h3>Complete Your Tipster Profile First</h3>
+                        <p style="margin: 12px 0; color: #8e8e9a;">You need to set up your tipster profile before creating stories.</p>
+                        <a href="setup-profile.html" class="btn-primary" style="display: inline-block; width: auto; padding: 12px 24px; text-decoration: none;">Setup Profile →</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            tipsterProfile = profile;
+            renderForm();
+        }
+        
+        function renderForm() {
+            const html = `
+                <form id="storyForm" onsubmit="submitStory(event)">
+                    <!-- Image Upload -->
+                    <div class="section">
+                        <div class="section-header">
+                            <span>📸</span> Story Image
+                        </div>
+                        <div class="section-body">
+                            <div class="image-upload-area" id="imageUploadArea" onclick="document.getElementById('imageInput').click()">
+                                <div style="font-size: 2rem; margin-bottom: 8px;">📷</div>
+                                <div>Tap to upload image</div>
+                                <div class="hint">JPG, PNG or GIF • Max 10MB</div>
+                            </div>
+                            <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageSelect(this)">
+                            <div id="imagePreviewContainer" class="image-preview" style="display: none;"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Prediction Details -->
+                    <div class="section">
+                        <div class="section-header">
+                            <span>🎯</span> Prediction Details
+                        </div>
+                        <div class="section-body">
+                            <div class="form-group">
+                                <label>Prediction <span class="required">*</span></label>
+                                <input type="text" id="predictionText" placeholder="e.g., Over 2.5 goals, Liverpool to win, Both teams to score" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Odds (Optional)</label>
+                                <input type="number" id="odds" step="0.01" placeholder="2.10">
+                            </div>
+                            <div class="form-group">
+                                <label>Caption (Optional)</label>
+                                <textarea id="caption" placeholder="Add a caption to your story..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Story Duration -->
+                    <div class="section">
+                        <div class="section-header">
+                            <span>⏰</span> Story Duration
+                        </div>
+                        <div class="section-body">
+                            <div class="expiry-options">
+                                <div class="expiry-option ${selectedExpiry === 24 ? 'selected' : ''}" onclick="selectExpiry(24)">
+                                    <div class="hours">24</div>
+                                    <div class="label">Hours</div>
+                                </div>
+                                <div class="expiry-option ${selectedExpiry === 48 ? 'selected' : ''}" onclick="selectExpiry(48)">
+                                    <div class="hours">48</div>
+                                    <div class="label">Hours</div>
+                                </div>
+                                <div class="expiry-option ${selectedExpiry === 72 ? 'selected' : ''}" onclick="selectExpiry(72)">
+                                    <div class="hours">72</div>
+                                    <div class="label">Hours</div>
+                                </div>
+                            </div>
+                            <div class="hint">Story will automatically disappear after selected time</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Live Preview -->
+                    <div class="preview-card">
+                        <div class="preview-header">📱 Live Preview (how followers will see it)</div>
+                        <div class="preview-content" id="previewContent">
+                            <div class="preview-image" style="display: flex; align-items: center; justify-content: center; background: #1a1c26;">
+                                <span style="color: #6b6b7a;">Select an image to preview</span>
+                            </div>
+                            <div class="preview-overlay">
+                                <div class="preview-prediction" id="previewPrediction">Your prediction will appear here</div>
+                                <div class="preview-odds" id="previewOdds"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="submit-section">
+                        <button type="submit" class="btn-primary" id="submitBtn">📤 Post Story</button>
+                    </div>
+                </form>
+            `;
+            
+            document.getElementById('mainContent').innerHTML = html;
+            setupPreviewListeners();
+        }
+        
+        function setupPreviewListeners() {
+            const predictionInput = document.getElementById('predictionText');
+            const oddsInput = document.getElementById('odds');
+            
+            predictionInput.addEventListener('input', updatePreview);
+            oddsInput.addEventListener('input', updatePreview);
+        }
+        
+        function updatePreview() {
+            const prediction = document.getElementById('predictionText').value;
+            const odds = document.getElementById('odds').value;
+            
+            const previewPrediction = document.getElementById('previewPrediction');
+            const previewOdds = document.getElementById('previewOdds');
+            
+            if (previewPrediction) {
+                previewPrediction.textContent = prediction || 'Your prediction will appear here';
+            }
+            if (previewOdds) {
+                previewOdds.textContent = odds ? `Odds: ${odds}` : '';
+            }
+        }
+        
+        function selectExpiry(hours) {
+            selectedExpiry = hours;
+            document.querySelectorAll('.expiry-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            document.querySelector(`.expiry-option .hours:contains('${hours}')`).parentElement?.classList.add('selected');
+            // Manual toggle
+            document.querySelectorAll('.expiry-option').forEach(opt => {
+                if (opt.querySelector('.hours').textContent == hours) {
+                    opt.classList.add('selected');
+                }
+            });
+        }
+        
+        function handleImageSelect(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            if (file.size > 10 * 1024 * 1024) {
+                showToast('Image must be less than 10MB');
+                return;
+            }
+            
+            selectedImageFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                selectedImageUrl = e.target.result;
+                updateImagePreview();
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function updateImagePreview() {
+            const previewContainer = document.getElementById('imagePreviewContainer');
+            const previewContent = document.querySelector('.preview-content');
+            
+            previewContainer.innerHTML = `
+                <img src="${selectedImageUrl}" alt="Preview">
+                <button class="remove-image" onclick="removeImage()">✕</button>
+            `;
+            previewContainer.style.display = 'block';
+            
+            if (previewContent) {
+                previewContent.innerHTML = `
+                    <img src="${selectedImageUrl}" class="preview-image" alt="Preview">
+                    <div class="preview-overlay">
+                        <div class="preview-prediction" id="previewPrediction">${document.getElementById('predictionText')?.value || 'Your prediction will appear here'}</div>
+                        <div class="preview-odds" id="previewOdds">${document.getElementById('odds')?.value ? `Odds: ${document.getElementById('odds').value}` : ''}</div>
+                    </div>
+                `;
+            }
+            
+            const uploadArea = document.getElementById('imageUploadArea');
+            if (uploadArea) uploadArea.style.display = 'none';
+        }
+        
+        function removeImage() {
+            selectedImageFile = null;
+            selectedImageUrl = null;
+            
+            const previewContainer = document.getElementById('imagePreviewContainer');
+            const uploadArea = document.getElementById('imageUploadArea');
+            const imageInput = document.getElementById('imageInput');
+            
+            previewContainer.style.display = 'none';
+            previewContainer.innerHTML = '';
+            if (uploadArea) uploadArea.style.display = 'block';
+            if (imageInput) imageInput.value = '';
+            
+            // Reset preview
+            const previewContent = document.querySelector('.preview-content');
+            if (previewContent) {
+                previewContent.innerHTML = `
+                    <div class="preview-image" style="display: flex; align-items: center; justify-content: center; background: #1a1c26;">
+                        <span style="color: #6b6b7a;">Select an image to preview</span>
+                    </div>
+                    <div class="preview-overlay">
+                        <div class="preview-prediction" id="previewPrediction">${document.getElementById('predictionText')?.value || 'Your prediction will appear here'}</div>
+                        <div class="preview-odds" id="previewOdds">${document.getElementById('odds')?.value ? `Odds: ${document.getElementById('odds').value}` : ''}</div>
+                    </div>
+                `;
+            }
+        }
+        
+        async function submitStory(event) {
+            event.preventDefault();
+            
+            if (isUploading) {
+                showToast('Please wait, image is uploading...');
+                return;
+            }
+            
+            const predictionText = document.getElementById('predictionText').value.trim();
+            const odds = parseFloat(document.getElementById('odds').value);
+            const caption = document.getElementById('caption').value.trim();
+            
+            if (!predictionText) {
+                showToast('Please enter a prediction');
+                return;
+            }
+            
+            if (!selectedImageFile) {
+                showToast('Please select an image for your story');
+                return;
+            }
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-sm"></span>Posting Story...';
+            isUploading = true;
+            
+            // Upload image to Supabase Storage
+            let imageUrl = null;
+            try {
+                const fileExt = selectedImageFile.name.split('.').pop();
+                const fileName = `stories/${currentUser.id}_${Date.now()}_${Math.random()}.${fileExt}`;
+                
+                const { error: uploadError } = await sb.storage
+                    .from('profiles')
+                    .upload(fileName, selectedImageFile);
+                
+                if (uploadError) {
+                    console.error('Upload error:', uploadError);
+                    showToast('Failed to upload image: ' + uploadError.message);
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '📤 Post Story';
+                    isUploading = false;
+                    return;
+                }
+                
+                const { data: { publicUrl } } = sb.storage
+                    .from('profiles')
+                    .getPublicUrl(fileName);
+                
+                imageUrl = publicUrl;
+            } catch (err) {
+                console.error(err);
+                showToast('Error uploading image');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '📤 Post Story';
+                isUploading = false;
+                return;
+            }
+            
+            // Calculate expiry date
+            const expiresAt = new Date();
+            expiresAt.setHours(expiresAt.getHours() + selectedExpiry);
+            
+            // Insert story
+            const storyData = {
+                tipster_id: currentUser.id,
+                image_url: imageUrl,
+                caption: caption || null,
+                prediction_text: predictionText,
+                odds: isNaN(odds) ? null : odds,
+                expires_at: expiresAt.toISOString(),
+                created_at: new Date().toISOString(),
+                views_count: 0
+            };
+            
+            const { data: newStory, error } = await sb
+                .from('stories')
+                .insert(storyData)
+                .select()
+                .single();
+            
+            if (error) {
+                console.error('Insert error:', error);
+                showToast('Error: ' + error.message);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '📤 Post Story';
+                isUploading = false;
+                return;
+            }
+            
+            showToast('Story posted! It will expire in ' + selectedExpiry + ' hours');
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1500);
+        }
+        
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+        
+        // Helper for contains selector
+        Element.prototype.containsSelector = function(selector) {
+            return this.matches(selector);
+        };
+        
+        init();
+    </script>
+</body>
+</html>

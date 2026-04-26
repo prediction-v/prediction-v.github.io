@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Post a Prediction • Ranka</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #0a0c10;
+            color: #fff;
+            line-height: 1.5;
+        }
+
+        .app {
+            max-width: 600px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+
+        .header {
+            position: sticky;
+            top: 0;
+            background: rgba(10, 12, 16, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 8px;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            flex: 1;
+        }
+
+        .post-type-selector {
+            display: flex;
+            gap: 8px;
+            padding: 12px 16px;
+            background: #12141c;
+            margin: 12px 16px;
+            border-radius: 40px;
+        }
+
+        .post-type {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            background: #1a1c26;
+            color: #8e8e9a;
+        }
+
+        .post-type.active {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white;
+        }
+
+        .section {
+            background: #12141c;
+            margin: 12px 16px;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .section-header {
+            padding: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-body {
+            padding: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            color: #8e8e9a;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        label .required {
+            color: #f5576c;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            background: #1a1c26;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 12px 14px;
+            color: #fff;
+            font-size: 0.9rem;
+            font-family: inherit;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #f5576c;
+        }
+
+        .row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .row .form-group {
+            flex: 1;
+        }
+
+        .categories-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .category-chip {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 30px;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .category-chip.selected {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            border-color: transparent;
+            color: white;
+        }
+
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .preset-btn {
+            background: #1a1c26;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .preset-btn.selected {
+            background: #f5576c;
+            border-color: #f5576c;
+        }
+
+        .proof-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .proof-item {
+            position: relative;
+            aspect-ratio: 1;
+            background: #1a1c26;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .proof-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .remove-proof {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: rgba(0,0,0,0.7);
+            border: none;
+            color: #ef4444;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .upload-btn {
+            background: rgba(245, 87, 108, 0.2);
+            border: 1px dashed #f5576c;
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            color: #f5576c;
+            font-size: 0.8rem;
+            margin-top: 12px;
+        }
+
+        .link-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .link-row input {
+            flex: 1;
+        }
+
+        .remove-link {
+            background: none;
+            border: none;
+            color: #ef4444;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .add-link-btn {
+            background: rgba(255,255,255,0.05);
+            border: none;
+            padding: 10px;
+            border-radius: 12px;
+            color: #8e8e9a;
+            cursor: pointer;
+            width: 100%;
+            font-size: 0.85rem;
+            margin-top: 8px;
+        }
+
+        .expiry-options {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .expiry-option {
+            flex: 1;
+            background: #1a1c26;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .expiry-option.selected {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            border-color: transparent;
+        }
+
+        .submit-section {
+            padding: 16px;
+        }
+
+        .btn-primary {
+            width: 100%;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            border: none;
+            padding: 14px;
+            border-radius: 28px;
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .warning-box {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px 16px;
+            text-align: center;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 12, 16, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding: 8px 16px 20px;
+            display: flex;
+            justify-content: space-around;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .bottom-nav a {
+            color: #6b6b7a;
+            text-decoration: none;
+            font-size: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .bottom-nav a.active {
+            color: #f5576c;
+        }
+
+        .bottom-nav span {
+            font-size: 0.65rem;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            padding: 10px 20px;
+            border-radius: 24px;
+            font-size: 0.85rem;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .spinner-sm {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <button class="back-btn" onclick="history.back()">←</button>
+            <div class="logo">Create Post</div>
+            <div style="width: 32px;"></div>
+        </div>
+
+        <div id="mainContent">
+            <div class="loading" style="text-align: center; padding: 40px;">
+                <div class="spinner-sm" style="width: 32px; height: 32px;"></div>
+                <p>Loading...</p>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <a href="index.html">🏠<span>Feed</span></a>
+            <a href="search.html">🔍<span>Search</span></a>
+            <a href="create-prediction.html" class="active">➕<span>Tip</span></a>
+            <a href="leaderboard.html">🏆<span>Top</span></a>
+            <a href="profile.html">👤<span>Profile</span></a>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://wmqsephiktkndrzasdam.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndtcXNlcGhpa3RrbmRyemFzZGFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNzk2NDEsImV4cCI6MjA5MjY1NTY0MX0.cpun979RKcODBePmVFij02PPcLwiSTRESrzPkiuTB5I';
+        
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let currentUser = null;
+        let tipsterProfile = null;
+        let categories = [];
+        let selectedCategoryIds = [];
+        let proofImages = [];
+        let proofLinks = [];
+        let isUploading = false;
+        let postType = 'prediction'; // 'prediction' or 'story'
+        let selectedExpiry = 24;
+        
+        async function init() {
+            const { data: { user } } = await sb.auth.getUser();
+            if (!user) {
+                window.location.href = 'login.html?redirect=create-prediction.html';
+                return;
+            }
+            currentUser = user;
+            
+            const { data: profile } = await sb
+                .from('profiles')
+                .select('*')
+                .eq('id', currentUser.id)
+                .maybeSingle();
+            
+            if (!profile || !profile.page_name) {
+                document.getElementById('mainContent').innerHTML = `
+                    <div class="warning-box">
+                        <div style="font-size: 3rem; margin-bottom: 12px;">⚠️</div>
+                        <h3>Complete Your Tipster Profile First</h3>
+                        <p style="margin: 12px 0; color: #8e8e9a;">You need to set up your tipster profile before posting.</p>
+                        <a href="setup-profile.html" class="btn-primary" style="display: inline-block; width: auto; padding: 12px 24px; text-decoration: none;">Setup Profile →</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            tipsterProfile = profile;
+            await loadCategories();
+            renderForm();
+        }
+        
+        async function loadCategories() {
+            const { data } = await sb
+                .from('categories')
+                .select('*')
+                .order('name');
+            
+            if (data && data.length > 0) {
+                categories = data;
+            } else {
+                categories = [
+                    { id: '1', name: 'Football', slug: 'football', icon: '⚽' },
+                    { id: '2', name: 'Basketball', slug: 'basketball', icon: '🏀' },
+                    { id: '3', name: 'Tennis', slug: 'tennis', icon: '🎾' },
+                    { id: '4', name: 'MMA', slug: 'mma', icon: '🥊' },
+                    { id: '5', name: 'Esports', slug: 'esports', icon: '🎮' }
+                ];
+            }
+        }
+        
+        function renderForm() {
+            const categoriesHtml = categories.map(cat => `
+                <div class="category-chip" data-cat-id="${cat.id}" onclick="toggleCategory('${cat.id}')">
+                    ${cat.icon || '📌'} ${cat.name}
+                </div>
+            `).join('');
+            
+            const predictionFormHtml = `
+                <div id="predictionForm" style="${postType === 'prediction' ? 'display: block;' : 'display: none;'}">
+                    <div class="section">
+                        <div class="section-header">
+                            <span>⚽</span> Match Details
+                        </div>
+                        <div class="section-body">
+                            <div class="form-group">
+                                <label>Title / Headline <span class="required">*</span></label>
+                                <input type="text" id="title" placeholder="e.g., Champions League Final Prediction" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Match / Event <span class="required">*</span></label>
+                                <input type="text" id="matchName" placeholder="e.g., Manchester United vs Liverpool" required>
+                            </div>
+                            <div class="row">
+                                <div class="form-group">
+                                    <label>Match Date</label>
+                                    <input type="datetime-local" id="matchDate">
+                                </div>
+                                <div class="form-group">
+                                    <label>Odds</label>
+                                    <input type="number" id="odds" step="0.01" placeholder="2.10">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-header">
+                            <span>🎯</span> Your Prediction
+                        </div>
+                        <div class="section-body">
+                            <div class="form-group">
+                                <label>Prediction Type</label>
+                                <div class="preset-grid" id="presetGrid">
+                                    <div type="button" class="preset-btn" onclick="selectPreset('1X2')">1X2</div>
+                                    <div type="button" class="preset-btn" onclick="selectPreset('Over/Under')">Over/Under</div>
+                                    <div type="button" class="preset-btn" onclick="selectPreset('BTTS')">BTTS</div>
+                                    <div type="button" class="preset-btn" onclick="selectPreset('Draw No Bet')">Draw No Bet</div>
+                                    <div type="button" class="preset-btn" onclick="selectPreset('Handicap')">Handicap</div>
+                                    <div type="button" class="preset-btn" onclick="selectPreset('Correct Score')">Correct Score</div>
+                                </div>
+                                <input type="text" id="predictionType" placeholder="Or type custom type" style="margin-top: 8px;">
+                            </div>
+                            <div class="form-group">
+                                <label>Prediction Value <span class="required">*</span></label>
+                                <input type="text" id="predictionValue" placeholder="e.g., Over 2.5, Liverpool Win, Both Teams to Score" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Additional Notes / Analysis</label>
+                                <textarea id="description" placeholder="Explain why you're confident about this pick..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-header">
+                            <span>🏷️</span> Sport Category
+                        </div>
+                        <div class="section-body">
+                            <div class="categories-grid" id="categoriesGrid">
+                                ${categoriesHtml}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-header">
+                            <span>📸</span> Proof Images (Optional)
+                        </div>
+                        <div class="section-body">
+                            <div id="proofImagesGrid" class="proof-grid"></div>
+                            <div class="upload-btn" onclick="document.getElementById('proofImageInput').click()">
+                                📸 + Upload Screenshot
+                            </div>
+                            <input type="file" id="proofImageInput" accept="image/*" multiple style="display: none;" onchange="uploadProofImages(this)">
+                            <div id="uploadProgress" class="progress-text"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-header">
+                            <span>🔗</span> Proof Links (Optional)
+                        </div>
+                        <div class="section-body">
+                            <div id="proofLinksContainer"></div>
+                            <button type="button" class="add-link-btn" onclick="addProofLinkField()">
+                                + Add bet slip link
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-header">
+                            <span>💰</span> Stake & Return (Optional)
+                        </div>
+                        <div class="section-body">
+                            <div class="row">
+                                <div class="form-group">
+                                    <label>Stake Amount ($)</label>
+                                    <input type="number" id="stake" step="0.01" placeholder="0.00">
+                                </div>
+                                <div class="form-group">
+                                    <label>Potential Return ($)</label>
+                                    <input type="number" id="potentialReturn" step="0.01" placeholder="0.00">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const storyFormHtml = `
+                <div id="storyForm" style="${postType === 'story' ? 'display: block;' : 'display: none;'}">
+                    <div class="section">
+                        <div class="section-header">
+                            <span>📸</span> Story Image
+                        </div>
+                        <div class="section-body">
+                            <div class="image-upload-area" id="storyImageUpload" onclick="document.getElementById('storyImageInput').click()">
+                                <div style="font-size: 2rem; margin-bottom: 8px;">📷</div>
+                                <div>Tap to upload image</div>
+                                <div class="hint">JPG, PNG • Max 10MB • Best ratio 9:16</div>
+                            </div>
+                            <input type="file" id="storyImageInput" accept="image/*" style="display: none;" onchange="handleStoryImageSelect(this)">
+                            <div id="storyImagePreview" class="image-preview" style="display: none; margin-top: 12px;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-header">
+                            <span>🎯</span> Story Prediction
+                        </div>
+                        <div class="section-body">
+                            <div class="form-group">
+                                <label>Prediction Text <span class="required">*</span></label>
+                                <input type="text" id="storyPredictionText" placeholder="e.g., Over 2.5 goals, Liverpool to win" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Odds (Optional)</label>
+                                <input type="number" id="storyOdds" step="0.01" placeholder="2.10">
+                            </div>
+                            <div class="form-group">
+                                <label>Caption (Optional)</label>
+                                <textarea id="storyCaption" placeholder="Add a caption to your story..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-header">
+                            <span>⏰</span> Story Duration
+                        </div>
+                        <div class="section-body">
+                            <div class="expiry-options">
+                                <div class="expiry-option ${selectedExpiry === 24 ? 'selected' : ''}" onclick="selectExpiry(24)">
+                                    <div>24 Hours</div>
+                                </div>
+                                <div class="expiry-option ${selectedExpiry === 48 ? 'selected' : ''}" onclick="selectExpiry(48)">
+                                    <div>48 Hours</div>
+                                </div>
+                                <div class="expiry-option ${selectedExpiry === 72 ? 'selected' : ''}" onclick="selectExpiry(72)">
+                                    <div>72 Hours</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const html = `
+                <div class="post-type-selector">
+                    <div class="post-type ${postType === 'prediction' ? 'active' : ''}" onclick="switchPostType('prediction')">📋 Prediction</div>
+                    <div class="post-type ${postType === 'story' ? 'active' : ''}" onclick="switchPostType('story')">📸 Story (24h)</div>
+                </div>
+                ${predictionFormHtml}
+                ${storyFormHtml}
+                <div class="submit-section">
+                    <button type="button" class="btn-primary" id="submitBtn" onclick="submitPost()">🚀 Post ${postType === 'prediction' ? 'Prediction' : 'Story'}</button>
+                </div>
+            `;
+            
+            document.getElementById('mainContent').innerHTML = html;
+            renderProofImages();
+            addProofLinkField();
+        }
+        
+        function switchPostType(type) {
+            postType = type;
+            renderForm();
+        }
+        
+        function toggleCategory(catId) {
+            const index = selectedCategoryIds.indexOf(catId);
+            if (index === -1) {
+                selectedCategoryIds.push(catId);
+            } else {
+                selectedCategoryIds.splice(index, 1);
+            }
+            
+            const chip = document.querySelector(`.category-chip[data-cat-id="${catId}"]`);
+            if (chip) {
+                if (selectedCategoryIds.includes(catId)) {
+                    chip.classList.add('selected');
+                } else {
+                    chip.classList.remove('selected');
+                }
+            }
+        }
+        
+        function selectPreset(type) {
+            document.getElementById('predictionType').value = type;
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.classList.remove('selected');
+                if (btn.textContent === type) {
+                    btn.classList.add('selected');
+                }
+            });
+        }
+        
+        function selectExpiry(hours) {
+            selectedExpiry = hours;
+            document.querySelectorAll('.expiry-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            event.target.closest('.expiry-option').classList.add('selected');
+        }
+        
+        let storyImageFile = null;
+        let storyImageUrl = null;
+        
+        function handleStoryImageSelect(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            if (file.size > 10 * 1024 * 1024) {
+                showToast('Image must be less than 10MB');
+                return;
+            }
+            
+            storyImageFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                storyImageUrl = e.target.result;
+                const previewContainer = document.getElementById('storyImagePreview');
+                const uploadArea = document.getElementById('storyImageUpload');
+                previewContainer.innerHTML = `<img src="${storyImageUrl}" style="width: 100%; border-radius: 16px;">`;
+                previewContainer.style.display = 'block';
+                uploadArea.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        async function uploadProofImages(input) {
+            const files = Array.from(input.files);
+            if (files.length === 0) return;
+            
+            const progressDiv = document.getElementById('uploadProgress');
+            isUploading = true;
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (progressDiv) progressDiv.textContent = `Uploading ${i + 1}/${files.length}...`;
+                
+                const fileExt = file.name.split('.').pop();
+                const fileName = `proofs/${currentUser.id}_${Date.now()}_${Math.random()}.${fileExt}`;
+                
+                try {
+                    const { error } = await sb.storage
+                        .from('predictions')
+                        .upload(fileName, file);
+                    
+                    if (error) {
+                        showToast(`Failed to upload ${file.name}: ${error.message}`);
+                        continue;
+                    }
+                    
+                    const { data: { publicUrl } } = sb.storage
+                        .from('predictions')
+                        .getPublicUrl(fileName);
+                    
+                    proofImages.push(publicUrl);
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+            
+            if (progressDiv) progressDiv.textContent = '';
+            isUploading = false;
+            renderProofImages();
+            input.value = '';
+        }
+        
+        function renderProofImages() {
+            const container = document.getElementById('proofImagesGrid');
+            if (!container) return;
+            
+            if (proofImages.length === 0) {
+                container.innerHTML = '<div class="hint" style="padding: 12px; text-align: center; color: #6b6b7a;">No images uploaded yet</div>';
+                return;
+            }
+            
+            container.innerHTML = proofImages.map((url, idx) => `
+                <div class="proof-item">
+                    <img src="${url}" alt="Proof" onclick="window.open('${url}', '_blank')">
+                    <button type="button" class="remove-proof" onclick="removeProofImage(${idx})">✕</button>
+                </div>
+            `).join('');
+        }
+        
+        function removeProofImage(index) {
+            proofImages.splice(index, 1);
+            renderProofImages();
+        }
+        
+        let linkFieldCount = 0;
+        
+        function addProofLinkField() {
+            const container = document.getElementById('proofLinksContainer');
+            if (!container) return;
+            
+            const id = 'link_' + Date.now() + '_' + linkFieldCount++;
+            const div = document.createElement('div');
+            div.className = 'link-row';
+            div.id = id;
+            div.innerHTML = `
+                <input type="url" class="proof-link-input" placeholder="https://... (bet slip link)">
+                <button type="button" class="remove-link" onclick="removeProofLinkField('${id}')">✕</button>
+            `;
+            container.appendChild(div);
+        }
+        
+        function removeProofLinkField(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+        
+        async function submitPost() {
+            if (postType === 'prediction') {
+                await submitPrediction();
+            } else {
+                await submitStory();
+            }
+        }
+        
+        async function submitPrediction() {
+            if (isUploading) {
+                showToast('Please wait for images to finish uploading');
+                return;
+            }
+            
+            const title = document.getElementById('title')?.value.trim();
+            const matchName = document.getElementById('matchName')?.value.trim();
+            const matchDate = document.getElementById('matchDate')?.value;
+            const odds = parseFloat(document.getElementById('odds')?.value);
+            const predictionType = document.getElementById('predictionType')?.value.trim();
+            const predictionValue = document.getElementById('predictionValue')?.value.trim();
+            const description = document.getElementById('description')?.value.trim();
+            const stake = parseFloat(document.getElementById('stake')?.value) || null;
+            const potentialReturn = parseFloat(document.getElementById('potentialReturn')?.value) || null;
+            
+            if (!title) { showToast('Title is required'); return; }
+            if (!matchName) { showToast('Match name is required'); return; }
+            if (!predictionValue) { showToast('Prediction value is required'); return; }
+            
+            const links = [];
+            document.querySelectorAll('.proof-link-input').forEach(input => {
+                const val = input.value.trim();
+                if (val) links.push(val);
+            });
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-sm"></span>Posting...';
+            
+            const predictionData = {
+                tipster_id: currentUser.id,
+                title: title,
+                match_name: matchName,
+                match_date: matchDate || null,
+                odds: isNaN(odds) ? null : odds,
+                prediction_type: predictionType || null,
+                prediction_value: predictionValue,
+                description: description || null,
+                proof_image_urls: proofImages,
+                proof_links: links,
+                stake: stake,
+                potential_return: potentialReturn,
+                status: 'pending',
+                created_at: new Date().toISOString()
+            };
+            
+            const { data: newPrediction, error } = await sb
+                .from('predictions')
+                .insert(predictionData)
+                .select()
+                .single();
+            
+            if (error) {
+                showToast('Error: ' + error.message);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '🚀 Post Prediction';
+                return;
+            }
+            
+            if (selectedCategoryIds.length > 0) {
+                const categoryInserts = selectedCategoryIds.map(catId => ({
+                    prediction_id: newPrediction.id,
+                    category_id: catId
+                }));
+                await sb.from('prediction_categories').insert(categoryInserts);
+            }
+            
+            showToast('Prediction posted successfully!');
+            setTimeout(() => {
+                window.location.href = `prediction.html?id=${newPrediction.id}`;
+            }, 1500);
+        }
+        
+        async function submitStory() {
+            const predictionText = document.getElementById('storyPredictionText')?.value.trim();
+            const odds = parseFloat(document.getElementById('storyOdds')?.value);
+            const caption = document.getElementById('storyCaption')?.value.trim();
+            
+            if (!predictionText) {
+                showToast('Please enter a prediction');
+                return;
+            }
+            
+            if (!storyImageFile) {
+                showToast('Please select an image for your story');
+                return;
+            }
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-sm"></span>Posting Story...';
+            
+            // Upload image
+            let imageUrl = null;
+            const fileExt = storyImageFile.name.split('.').pop();
+            const fileName = `stories/${currentUser.id}_${Date.now()}_${Math.random()}.${fileExt}`;
+            
+            const { error: uploadError } = await sb.storage
+                .from('profiles')
+                .upload(fileName, storyImageFile);
+            
+            if (uploadError) {
+                showToast('Failed to upload image: ' + uploadError.message);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '📤 Post Story';
+                return;
+            }
+            
+            const { data: { publicUrl } } = sb.storage
+                .from('profiles')
+                .getPublicUrl(fileName);
+            imageUrl = publicUrl;
+            
+            const expiresAt = new Date();
+            expiresAt.setHours(expiresAt.getHours() + selectedExpiry);
+            
+            const storyData = {
+                tipster_id: currentUser.id,
+                image_url: imageUrl,
+                caption: caption || null,
+                prediction_text: predictionText,
+                odds: isNaN(odds) ? null : odds,
+                expires_at: expiresAt.toISOString(),
+                created_at: new Date().toISOString(),
+                views_count: 0
+            };
+            
+            const { error } = await sb
+                .from('stories')
+                .insert(storyData);
+            
+            if (error) {
+                showToast('Error: ' + error.message);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '📤 Post Story';
+                return;
+            }
+            
+            showToast('Story posted! It will expire in ' + selectedExpiry + ' hours');
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1500);
+        }
+        
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+        
+        init();
+    </script>
+</body>
+</html>

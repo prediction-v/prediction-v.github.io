@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Create Post • Ranka</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #0a0c10;
+            color: #fff;
+            line-height: 1.5;
+        }
+
+        .app {
+            max-width: 600px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+
+        /* Header */
+        .header {
+            position: sticky;
+            top: 0;
+            background: rgba(10, 12, 16, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 8px;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            flex: 1;
+        }
+
+        .post-btn {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 30px;
+            color: white;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .post-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Tipster Info */
+        .tipster-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: #12141c;
+            margin: 12px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .tipster-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .tipster-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .tipster-details {
+            flex: 1;
+        }
+
+        .tipster-name {
+            font-weight: 700;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tipster-handle {
+            font-size: 0.7rem;
+            color: #8e8e9a;
+        }
+
+        /* Post Input Area */
+        .post-input-area {
+            padding: 0 16px;
+        }
+
+        .post-textarea {
+            width: 100%;
+            background: #12141c;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 16px;
+            color: white;
+            font-size: 1rem;
+            font-family: inherit;
+            resize: none;
+            min-height: 120px;
+        }
+
+        .post-textarea:focus {
+            outline: none;
+            border-color: #f5576c;
+        }
+
+        .post-textarea::placeholder {
+            color: #4a4a5a;
+        }
+
+        /* Image Upload */
+        .image-upload-area {
+            background: #12141c;
+            border: 2px dashed rgba(245, 87, 108, 0.3);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 16px;
+        }
+
+        .image-upload-area:hover {
+            border-color: #f5576c;
+            background: rgba(245, 87, 108, 0.05);
+        }
+
+        .image-preview {
+            margin-top: 16px;
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .image-preview img {
+            width: 100%;
+            max-height: 300px;
+            object-fit: cover;
+            border-radius: 16px;
+        }
+
+        .remove-image {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0,0,0,0.7);
+            border: none;
+            color: #ef4444;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        /* Character Counter */
+        .char-counter {
+            text-align: right;
+            font-size: 0.7rem;
+            color: #6b6b7a;
+            margin-top: 8px;
+            padding: 0 4px;
+        }
+
+        .char-counter.warning {
+            color: #f59e0b;
+        }
+
+        .char-counter.danger {
+            color: #ef4444;
+        }
+
+        /* Preview Card */
+        .preview-card {
+            background: #12141c;
+            border-radius: 20px;
+            margin: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .preview-header {
+            padding: 12px 16px;
+            background: rgba(0,0,0,0.3);
+            font-size: 0.8rem;
+            color: #8e8e9a;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .preview-content {
+            padding: 16px;
+        }
+
+        .preview-tipster {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .preview-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .preview-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .preview-handle {
+            font-size: 0.7rem;
+            color: #8e8e9a;
+        }
+
+        .preview-text {
+            font-size: 0.9rem;
+            line-height: 1.4;
+            margin-bottom: 12px;
+            color: #cbd5e1;
+        }
+
+        .preview-image {
+            width: 100%;
+            border-radius: 16px;
+            margin-top: 8px;
+        }
+
+        /* Warning Box */
+        .warning-box {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px 16px;
+            text-align: center;
+        }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 12, 16, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding: 8px 16px 20px;
+            display: flex;
+            justify-content: space-around;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .bottom-nav a {
+            color: #6b6b7a;
+            text-decoration: none;
+            font-size: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .bottom-nav a.active {
+            color: #f5576c;
+        }
+
+        .bottom-nav span {
+            font-size: 0.65rem;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            padding: 10px 20px;
+            border-radius: 24px;
+            font-size: 0.85rem;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .spinner-sm {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <button class="back-btn" onclick="history.back()">←</button>
+            <div class="logo">Create Post</div>
+            <button class="post-btn" id="postBtn" onclick="submitPost()">Post</button>
+        </div>
+
+        <div id="mainContent">
+            <div class="loading" style="text-align: center; padding: 40px;">
+                <div class="spinner-sm" style="width: 32px; height: 32px;"></div>
+                <p>Loading...</p>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <a href="dashboard.html">📊<span>Dashboard</span></a>
+            <a href="index.html">🏠<span>Feed</span></a>
+            <a href="search.html">🔍<span>Search</span></a>
+            <a href="leaderboard.html">🏆<span>Top</span></a>
+            <a href="profile.html">👤<span>Profile</span></a>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://wmqsephiktkndrzasdam.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndtcXNlcGhpa3RrbmRyemFzZGFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNzk2NDEsImV4cCI6MjA5MjY1NTY0MX0.cpun979RKcODBePmVFij02PPcLwiSTRESrzPkiuTB5I';
+        
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let currentUser = null;
+        let tipsterProfile = null;
+        let postContent = '';
+        let selectedImageFile = null;
+        let selectedImageUrl = null;
+        let isUploading = false;
+        
+        const MAX_CHARS = 1000;
+        
+        async function init() {
+            const { data: { user } } = await sb.auth.getUser();
+            if (!user) {
+                window.location.href = 'login.html?redirect=create-post.html';
+                return;
+            }
+            currentUser = user;
+            
+            const { data: profile } = await sb
+                .from('profiles')
+                .select('*')
+                .eq('id', currentUser.id)
+                .maybeSingle();
+            
+            if (!profile || !profile.page_name) {
+                document.getElementById('mainContent').innerHTML = `
+                    <div class="warning-box">
+                        <div style="font-size: 3rem; margin-bottom: 12px;">⚠️</div>
+                        <h3>Complete Your Tipster Profile First</h3>
+                        <p style="margin: 12px 0; color: #8e8e9a;">You need to set up your tipster profile before creating posts.</p>
+                        <a href="setup-profile.html" class="btn-primary" style="display: inline-block; width: auto; padding: 12px 24px; background: linear-gradient(135deg, #f093fb, #f5576c); border-radius: 30px; text-decoration: none; color: white;">Setup Profile →</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            tipsterProfile = profile;
+            renderForm();
+            updatePreview();
+        }
+        
+        function renderForm() {
+            const displayName = tipsterProfile.display_name || tipsterProfile.username;
+            const avatarLetter = displayName.charAt(0).toUpperCase();
+            const avatarUrl = tipsterProfile.avatar_url;
+            
+            const html = `
+                <div class="tipster-info">
+                    <div class="tipster-avatar">
+                        ${avatarUrl ? `<img src="${avatarUrl}" alt="">` : avatarLetter}
+                    </div>
+                    <div class="tipster-details">
+                        <div class="tipster-name">${escapeHtml(displayName)}</div>
+                        <div class="tipster-handle">@${escapeHtml(tipsterProfile.page_name)}</div>
+                    </div>
+                </div>
+                
+                <div class="post-input-area">
+                    <textarea 
+                        id="postContent" 
+                        class="post-textarea" 
+                        placeholder="What's on your mind? Share your thoughts, predictions, or updates with your followers..."
+                        maxlength="${MAX_CHARS}"
+                        oninput="updateContent()"
+                    ></textarea>
+                    <div class="char-counter" id="charCounter">0 / ${MAX_CHARS}</div>
+                    
+                    <div class="image-upload-area" id="imageUploadArea" onclick="document.getElementById('imageInput').click()">
+                        <div style="font-size: 2rem; margin-bottom: 8px;">📷</div>
+                        <div>Add an image</div>
+                        <div class="hint" style="font-size: 0.7rem; color: #6b6b7a;">Optional • JPG, PNG, GIF up to 10MB</div>
+                    </div>
+                    <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageSelect(this)">
+                    <div id="imagePreviewContainer" class="image-preview" style="display: none;"></div>
+                </div>
+                
+                <div class="preview-card">
+                    <div class="preview-header">📱 Live Preview (how followers will see it)</div>
+                    <div class="preview-content">
+                        <div class="preview-tipster">
+                            <div class="preview-avatar">
+                                ${avatarUrl ? `<img src="${avatarUrl}" style="width:100%;height:100%;object-fit:cover;">` : avatarLetter}
+                            </div>
+                            <div>
+                                <div class="preview-name">${escapeHtml(displayName)}</div>
+                                <div class="preview-handle">@${escapeHtml(tipsterProfile.page_name)}</div>
+                            </div>
+                        </div>
+                        <div class="preview-text" id="previewText">Your post will appear here...</div>
+                        <div id="previewImageContainer"></div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('mainContent').innerHTML = html;
+        }
+        
+        function updateContent() {
+            const textarea = document.getElementById('postContent');
+            postContent = textarea.value;
+            
+            // Update character counter
+            const counter = document.getElementById('charCounter');
+            const length = postContent.length;
+            counter.textContent = `${length} / ${MAX_CHARS}`;
+            
+            if (length > MAX_CHARS * 0.9) {
+                counter.classList.add('warning');
+            } else {
+                counter.classList.remove('warning');
+            }
+            if (length >= MAX_CHARS) {
+                counter.classList.add('danger');
+            } else {
+                counter.classList.remove('danger');
+            }
+            
+            updatePreview();
+        }
+        
+        function updatePreview() {
+            const previewText = document.getElementById('previewText');
+            if (previewText) {
+                if (postContent.trim()) {
+                    previewText.textContent = postContent;
+                } else {
+                    previewText.textContent = 'Your post will appear here...';
+                    previewText.style.color = '#6b6b7a';
+                }
+            }
+        }
+        
+        function handleImageSelect(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            if (file.size > 10 * 1024 * 1024) {
+                showToast('Image must be less than 10MB');
+                return;
+            }
+            
+            selectedImageFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                selectedImageUrl = e.target.result;
+                updateImagePreview();
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function updateImagePreview() {
+            const previewContainer = document.getElementById('imagePreviewContainer');
+            const previewImageContainer = document.getElementById('previewImageContainer');
+            const uploadArea = document.getElementById('imageUploadArea');
+            
+            previewContainer.innerHTML = `
+                <img src="${selectedImageUrl}" alt="Preview">
+                <button class="remove-image" onclick="removeImage()">✕</button>
+            `;
+            previewContainer.style.display = 'block';
+            
+            if (previewImageContainer) {
+                previewImageContainer.innerHTML = `<img src="${selectedImageUrl}" class="preview-image" alt="Preview">`;
+            }
+            
+            if (uploadArea) uploadArea.style.display = 'none';
+        }
+        
+        function removeImage() {
+            selectedImageFile = null;
+            selectedImageUrl = null;
+            
+            const previewContainer = document.getElementById('imagePreviewContainer');
+            const previewImageContainer = document.getElementById('previewImageContainer');
+            const uploadArea = document.getElementById('imageUploadArea');
+            const imageInput = document.getElementById('imageInput');
+            
+            previewContainer.style.display = 'none';
+            previewContainer.innerHTML = '';
+            if (previewImageContainer) previewImageContainer.innerHTML = '';
+            if (uploadArea) uploadArea.style.display = 'block';
+            if (imageInput) imageInput.value = '';
+        }
+        
+        async function submitPost() {
+            const content = document.getElementById('postContent')?.value.trim();
+            
+            if (!content) {
+                showToast('Please enter some content for your post');
+                return;
+            }
+            
+            if (content.length > MAX_CHARS) {
+                showToast(`Content exceeds ${MAX_CHARS} characters`);
+                return;
+            }
+            
+            const postBtn = document.getElementById('postBtn');
+            postBtn.disabled = true;
+            postBtn.innerHTML = '<span class="spinner-sm"></span>Posting...';
+            isUploading = true;
+            
+            let imageUrl = null;
+            
+            // Upload image if selected
+            if (selectedImageFile) {
+                const fileExt = selectedImageFile.name.split('.').pop();
+                const fileName = `posts/${currentUser.id}_${Date.now()}_${Math.random()}.${fileExt}`;
+                
+                const { error: uploadError } = await sb.storage
+                    .from('profiles')
+                    .upload(fileName, selectedImageFile);
+                
+                if (uploadError) {
+                    showToast('Failed to upload image: ' + uploadError.message);
+                    postBtn.disabled = false;
+                    postBtn.innerHTML = 'Post';
+                    isUploading = false;
+                    return;
+                }
+                
+                const { data: { publicUrl } } = sb.storage
+                    .from('profiles')
+                    .getPublicUrl(fileName);
+                
+                imageUrl = publicUrl;
+            }
+            
+            // Create post
+            const postData = {
+                tipster_id: currentUser.id,
+                content: content,
+                image_url: imageUrl,
+                likes_count: 0,
+                comments_count: 0,
+                created_at: new Date().toISOString()
+            };
+            
+            const { data: newPost, error } = await sb
+                .from('posts')
+                .insert(postData)
+                .select()
+                .single();
+            
+            if (error) {
+                showToast('Error: ' + error.message);
+                postBtn.disabled = false;
+                postBtn.innerHTML = 'Post';
+                isUploading = false;
+                return;
+            }
+            
+            showToast('Post created successfully!');
+            setTimeout(() => {
+                window.location.href = `tipster.html?page=${tipsterProfile.page_name}`;
+            }, 1500);
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+        
+        init();
+    </script>
+</body>
+</html>

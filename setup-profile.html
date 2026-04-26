@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Setup Your Tipster Profile • Ranka</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #0a0c10;
+            color: #fff;
+            line-height: 1.5;
+        }
+
+        .app {
+            max-width: 600px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding-bottom: 40px;
+        }
+
+        .header {
+            position: sticky;
+            top: 0;
+            background: rgba(10, 12, 16, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 8px;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            flex: 1;
+        }
+
+        .save-status {
+            font-size: 0.75rem;
+            color: #10b981;
+        }
+
+        .section {
+            background: #12141c;
+            margin: 12px 16px;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .section-header {
+            padding: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-body {
+            padding: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            color: #8e8e9a;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            background: #1a1c26;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 12px 14px;
+            color: #fff;
+            font-size: 0.9rem;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #f5576c;
+            background: #1f212e;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .hint {
+            font-size: 0.7rem;
+            color: #6b6b7a;
+            margin-top: 6px;
+        }
+
+        /* Toggle Switch */
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #1a1c26;
+            padding: 12px;
+            border-radius: 12px;
+            margin-top: 8px;
+        }
+
+        .toggle-label {
+            font-size: 0.85rem;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 48px;
+            height: 24px;
+            background: #334155;
+            border-radius: 24px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .toggle-switch.active {
+            background: #f5576c;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(24px);
+        }
+
+        /* Avatar & Cover Upload */
+        .cover-area {
+            position: relative;
+            height: 160px;
+            background: linear-gradient(135deg, #1a1c26, #0f1119);
+            border-radius: 16px 16px 0 0;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .cover-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .cover-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.6);
+            padding: 8px;
+            text-align: center;
+            font-size: 0.7rem;
+            color: white;
+        }
+
+        .avatar-area {
+            position: relative;
+            margin-top: -50px;
+            padding: 0 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 8px;
+        }
+
+        .avatar {
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            border: 4px solid #0a0c10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 700;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .change-photo-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            padding: 6px 12px;
+            border-radius: 20px;
+            color: white;
+            font-size: 0.7rem;
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
+
+        /* Image preview grid */
+        .proof-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .proof-item {
+            position: relative;
+            aspect-ratio: 1;
+            background: #1a1c26;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .proof-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .remove-proof {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: rgba(0,0,0,0.7);
+            border: none;
+            color: #ef4444;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .upload-btn {
+            background: rgba(245, 87, 108, 0.2);
+            border: 1px dashed #f5576c;
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            color: #f5576c;
+            font-size: 0.8rem;
+            margin-top: 12px;
+        }
+
+        /* Social links row */
+        .social-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .social-row input {
+            flex: 1;
+        }
+
+        .remove-social {
+            background: none;
+            border: none;
+            color: #ef4444;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .add-social-btn {
+            background: rgba(255,255,255,0.05);
+            border: none;
+            padding: 10px;
+            border-radius: 12px;
+            color: #8e8e9a;
+            cursor: pointer;
+            width: 100%;
+            font-size: 0.85rem;
+            margin-top: 8px;
+        }
+
+        .submit-section {
+            padding: 16px;
+        }
+
+        .btn-primary {
+            width: 100%;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            border: none;
+            padding: 14px;
+            border-radius: 28px;
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            padding: 10px 20px;
+            border-radius: 24px;
+            font-size: 0.85rem;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .spinner-sm {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .page-preview {
+            background: #1a1c26;
+            border-radius: 12px;
+            padding: 12px;
+            margin-top: 12px;
+            font-size: 0.85rem;
+            color: #8e8e9a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .page-preview a {
+            color: #f5576c;
+            text-decoration: none;
+        }
+
+        .verification-section {
+            background: rgba(30, 158, 255, 0.05);
+            border: 1px solid rgba(30, 158, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <button class="back-btn" onclick="history.back()">←</button>
+            <div class="logo">Complete Profile</div>
+            <div class="save-status" id="saveStatus"></div>
+        </div>
+
+        <form id="profileForm" onsubmit="saveProfile(event)">
+            <!-- Cover & Avatar -->
+            <div class="section">
+                <div class="cover-area" onclick="document.getElementById('coverInput').click()">
+                    <img id="coverPreview" class="cover-image" style="display: none;">
+                    <div class="cover-overlay">📸 Tap to change cover photo</div>
+                </div>
+                <input type="file" id="coverInput" accept="image/*" style="display: none;" onchange="uploadCover(this)">
+                
+                <div class="avatar-area">
+                    <div class="avatar" onclick="document.getElementById('avatarInput').click()">
+                        <img id="avatarPreview" style="display: none;">
+                        <span id="avatarPlaceholder">📷</span>
+                    </div>
+                    <button type="button" class="change-photo-btn" onclick="document.getElementById('avatarInput').click()">Change Photo</button>
+                </div>
+                <input type="file" id="avatarInput" accept="image/*" style="display: none;" onchange="uploadAvatar(this)">
+            </div>
+
+            <!-- Basic Info -->
+            <div class="section">
+                <div class="section-header">
+                    <span>✏️</span> Basic Information
+                </div>
+                <div class="section-body">
+                    <div class="form-group">
+                        <label>Display Name *</label>
+                        <input type="text" id="displayName" placeholder="e.g., King Tips, Pro Predictor" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Username (for login)</label>
+                        <input type="text" id="username" placeholder="username" readonly style="background:#0a0c10; color:#6b6b7a;">
+                        <div class="hint">This is your login email/username and cannot be changed</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Your Unique Page Name *</label>
+                        <input type="text" id="pageName" placeholder="kingtips" required pattern="[a-z0-9_]+" title="Only lowercase letters, numbers, and underscores">
+                        <div class="hint">Your public profile URL: ranka.com/tipster.html?page=<span id="pageNamePreview">yourname</span></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Bio</label>
+                        <textarea id="bio" placeholder="Tell followers about your prediction style, win rate, experience..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Information (NEW) -->
+            <div class="section">
+                <div class="section-header">
+                    <span>📞</span> Contact Information
+                </div>
+                <div class="section-body">
+                    <div class="form-group">
+                        <label>WhatsApp Number</label>
+                        <input type="tel" id="whatsappNumber" placeholder="e.g., 256700123456">
+                        <div class="hint">International format without '+' (e.g., 256700123456)</div>
+                    </div>
+                    <div class="toggle-row">
+                        <span class="toggle-label">Show WhatsApp button on profile</span>
+                        <div class="toggle-switch" id="whatsappToggle">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label>Telegram Username</label>
+                        <input type="text" id="telegramUsername" placeholder="@yourusername">
+                        <div class="hint">Your Telegram username (with or without @)</div>
+                    </div>
+                    <div class="toggle-row">
+                        <span class="toggle-label">Show Telegram button on profile</span>
+                        <div class="toggle-switch" id="telegramToggle">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats (manual entry for initial setup) -->
+            <div class="section">
+                <div class="section-header">
+                    <span>📊</span> Your Stats (Optional)
+                </div>
+                <div class="section-body">
+                    <div class="form-group">
+                        <label>Total Wins</label>
+                        <input type="number" id="totalWins" placeholder="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Total Losses</label>
+                        <input type="number" id="totalLosses" placeholder="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Total Profit ($)</label>
+                        <input type="number" id="totalProfit" placeholder="0" step="0.01">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Social/Channel Links -->
+            <div class="section">
+                <div class="section-header">
+                    <span>🔗</span> Share Your Channels
+                </div>
+                <div class="section-body">
+                    <div id="socialLinksContainer"></div>
+                    <button type="button" class="add-social-btn" onclick="addSocialField()">
+                        + Add Telegram, WhatsApp, or Channel Link
+                    </button>
+                    <div class="hint" style="margin-top: 12px;">Share links to your prediction groups/channels. Your followers can join directly.</div>
+                </div>
+            </div>
+
+            <!-- Verification Proofs -->
+            <div class="section verification-section">
+                <div class="section-header">
+                    <span>✅</span> Get Verified (Proof of History)
+                </div>
+                <div class="section-body">
+                    <div class="form-group">
+                        <label>Upload Winning Proof Screenshots</label>
+                        <div class="hint">Upload 2-3 winning bet slips to help us verify you're a real tipster</div>
+                        <div id="verificationProofGrid" class="proof-grid"></div>
+                        <div class="upload-btn" onclick="document.getElementById('verificationProofInput').click()">
+                            📸 + Upload Proof Screenshot
+                        </div>
+                        <input type="file" id="verificationProofInput" accept="image/*" multiple style="display: none;" onchange="uploadVerificationProofs(this)">
+                    </div>
+                </div>
+            </div>
+
+            <div class="submit-section">
+                <button type="submit" class="btn-primary" id="submitBtn">✨ Save & Publish Profile</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://wmqsephiktkndrzasdam.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndtcXNlcGhpa3RrbmRyemFzZGFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNzk2NDEsImV4cCI6MjA5MjY1NTY0MX0.cpun979RKcODBePmVFij02PPcLwiSTRESrzPkiuTB5I';
+        
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let currentUser = null;
+        let existingProfile = null;
+        let coverUrl = null;
+        let avatarUrl = null;
+        let verificationProofs = [];
+        let socialFields = [];
+        let showWhatsapp = true;
+        let showTelegram = true;
+        
+        async function init() {
+            const { data: { user } } = await sb.auth.getUser();
+            if (!user) {
+                window.location.href = 'login.html?redirect=setup-profile.html';
+                return;
+            }
+            currentUser = user;
+            document.getElementById('username').value = user.email || user.id.substring(0, 10);
+            
+            await loadExistingProfile();
+            await loadExistingStats();
+            setupPageNamePreview();
+            setupToggles();
+        }
+        
+        async function loadExistingProfile() {
+            const { data, error } = await sb
+                .from('profiles')
+                .select('*')
+                .eq('id', currentUser.id)
+                .maybeSingle();
+            
+            if (data) {
+                existingProfile = data;
+                document.getElementById('displayName').value = data.display_name || '';
+                document.getElementById('pageName').value = data.page_name || '';
+                document.getElementById('bio').value = data.bio || '';
+                document.getElementById('whatsappNumber').value = data.whatsapp_number || '';
+                document.getElementById('telegramUsername').value = data.telegram_username || '';
+                showWhatsapp = data.show_whatsapp !== false;
+                showTelegram = data.show_telegram !== false;
+                
+                if (data.avatar_url) {
+                    avatarUrl = data.avatar_url;
+                    document.getElementById('avatarPreview').src = data.avatar_url;
+                    document.getElementById('avatarPreview').style.display = 'block';
+                    document.getElementById('avatarPlaceholder').style.display = 'none';
+                }
+                
+                if (data.cover_url) {
+                    coverUrl = data.cover_url;
+                    document.getElementById('coverPreview').src = data.cover_url;
+                    document.getElementById('coverPreview').style.display = 'block';
+                }
+                
+                // Load existing social links
+                const socialData = [];
+                if (data.telegram_link) socialData.push({ platform: 'telegram', url: data.telegram_link });
+                if (data.whatsapp_link) socialData.push({ platform: 'whatsapp', url: data.whatsapp_link });
+                if (data.channel_link) socialData.push({ platform: 'channel', url: data.channel_link });
+                if (data.website) socialData.push({ platform: 'website', url: data.website });
+                
+                socialData.forEach(s => addSocialField(s.platform, s.url));
+                
+                if (data.verified_proofs && data.verified_proofs.length) {
+                    verificationProofs = data.verified_proofs;
+                    renderVerificationProofs();
+                }
+                
+                document.getElementById('submitBtn').textContent = '✨ Update Profile';
+            } else {
+                addSocialField();
+            }
+            
+            // Update toggle UI
+            updateToggleUI();
+        }
+        
+        function setupToggles() {
+            const whatsappToggle = document.getElementById('whatsappToggle');
+            const telegramToggle = document.getElementById('telegramToggle');
+            
+            whatsappToggle.addEventListener('click', () => {
+                showWhatsapp = !showWhatsapp;
+                updateToggleUI();
+            });
+            
+            telegramToggle.addEventListener('click', () => {
+                showTelegram = !showTelegram;
+                updateToggleUI();
+            });
+        }
+        
+        function updateToggleUI() {
+            const whatsappToggle = document.getElementById('whatsappToggle');
+            const telegramToggle = document.getElementById('telegramToggle');
+            
+            if (showWhatsapp) {
+                whatsappToggle.classList.add('active');
+            } else {
+                whatsappToggle.classList.remove('active');
+            }
+            
+            if (showTelegram) {
+                telegramToggle.classList.add('active');
+            } else {
+                telegramToggle.classList.remove('active');
+            }
+        }
+        
+        async function loadExistingStats() {
+            const { data } = await sb
+                .from('tipster_stats')
+                .select('*')
+                .eq('tipster_id', currentUser.id)
+                .maybeSingle();
+            
+            if (data) {
+                document.getElementById('totalWins').value = data.total_wins || 0;
+                document.getElementById('totalLosses').value = data.total_losses || 0;
+                document.getElementById('totalProfit').value = data.total_profit || 0;
+            }
+        }
+        
+        function setupPageNamePreview() {
+            const input = document.getElementById('pageName');
+            const preview = document.getElementById('pageNamePreview');
+            input.addEventListener('input', () => {
+                const val = input.value.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+                input.value = val;
+                preview.textContent = val || 'yourname';
+            });
+        }
+        
+        function addSocialField(platform = '', url = '') {
+            const container = document.getElementById('socialLinksContainer');
+            const id = 'social_' + Date.now() + '_' + Math.random();
+            const platformOptions = `
+                <select class="social-platform" data-id="${id}">
+                    <option value="telegram" ${platform === 'telegram' ? 'selected' : ''}>✈️ Telegram Group</option>
+                    <option value="whatsapp" ${platform === 'whatsapp' ? 'selected' : ''}>💬 WhatsApp Group</option>
+                    <option value="channel" ${platform === 'channel' ? 'selected' : ''}>📢 Channel/Group</option>
+                    <option value="website" ${platform === 'website' ? 'selected' : ''}>🌐 Website</option>
+                </select>
+            `;
+            
+            const div = document.createElement('div');
+            div.className = 'social-row';
+            div.id = id;
+            div.innerHTML = `
+                ${platformOptions}
+                <input type="url" class="social-url" placeholder="https://t.me/yourchannel" value="${escapeHtml(url)}">
+                <button type="button" class="remove-social" onclick="removeSocialField('${id}')">✕</button>
+            `;
+            container.appendChild(div);
+            socialFields.push(id);
+        }
+        
+        function removeSocialField(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+            socialFields = socialFields.filter(f => f !== id);
+        }
+        
+        async function uploadCover(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            showToast('Uploading cover...');
+            const fileExt = file.name.split('.').pop();
+            const fileName = `covers/${currentUser.id}_${Date.now()}.${fileExt}`;
+            
+            const { data, error } = await sb.storage
+                .from('profiles')
+                .upload(fileName, file);
+            
+            if (error) {
+                showToast('Upload failed: ' + error.message);
+                return;
+            }
+            
+            const { data: { publicUrl } } = sb.storage
+                .from('profiles')
+                .getPublicUrl(fileName);
+            
+            coverUrl = publicUrl;
+            document.getElementById('coverPreview').src = coverUrl;
+            document.getElementById('coverPreview').style.display = 'block';
+            showToast('Cover uploaded!');
+        }
+        
+        async function uploadAvatar(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            showToast('Uploading avatar...');
+            const fileExt = file.name.split('.').pop();
+            const fileName = `avatars/${currentUser.id}_${Date.now()}.${fileExt}`;
+            
+            const { data, error } = await sb.storage
+                .from('profiles')
+                .upload(fileName, file);
+            
+            if (error) {
+                showToast('Upload failed: ' + error.message);
+                return;
+            }
+            
+            const { data: { publicUrl } } = sb.storage
+                .from('profiles')
+                .getPublicUrl(fileName);
+            
+            avatarUrl = publicUrl;
+            document.getElementById('avatarPreview').src = avatarUrl;
+            document.getElementById('avatarPreview').style.display = 'block';
+            document.getElementById('avatarPlaceholder').style.display = 'none';
+            showToast('Avatar uploaded!');
+        }
+        
+        async function uploadVerificationProofs(input) {
+            const files = Array.from(input.files);
+            if (files.length === 0) return;
+            
+            showToast(`Uploading ${files.length} proof(s)...`);
+            
+            for (const file of files) {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `verification/${currentUser.id}_${Date.now()}_${Math.random()}.${fileExt}`;
+                
+                const { error } = await sb.storage
+                    .from('profiles')
+                    .upload(fileName, file);
+                
+                if (!error) {
+                    const { data: { publicUrl } } = sb.storage
+                        .from('profiles')
+                        .getPublicUrl(fileName);
+                    verificationProofs.push(publicUrl);
+                }
+            }
+            
+            renderVerificationProofs();
+            showToast(`Uploaded ${files.length} proof(s)`);
+            input.value = '';
+        }
+        
+        function renderVerificationProofs() {
+            const container = document.getElementById('verificationProofGrid');
+            if (!container) return;
+            
+            if (verificationProofs.length === 0) {
+                container.innerHTML = '<div class="hint" style="padding: 12px; text-align: center;">No proofs uploaded yet. Add winning slips to get verified.</div>';
+                return;
+            }
+            
+            container.innerHTML = verificationProofs.map((url, idx) => `
+                <div class="proof-item">
+                    <img src="${url}" alt="Proof">
+                    <button type="button" class="remove-proof" onclick="removeVerificationProof(${idx})">✕</button>
+                </div>
+            `).join('');
+        }
+        
+        function removeVerificationProof(index) {
+            verificationProofs.splice(index, 1);
+            renderVerificationProofs();
+        }
+        
+        async function saveProfile(event) {
+            event.preventDefault();
+            
+            const displayName = document.getElementById('displayName').value.trim();
+            const pageName = document.getElementById('pageName').value.trim().toLowerCase();
+            const bio = document.getElementById('bio').value.trim();
+            const whatsappNumber = document.getElementById('whatsappNumber').value.trim();
+            let telegramUsername = document.getElementById('telegramUsername').value.trim();
+            
+            // Clean Telegram username (remove @ if present)
+            if (telegramUsername.startsWith('@')) {
+                telegramUsername = telegramUsername.substring(1);
+            }
+            
+            if (!displayName) {
+                showToast('Display name is required');
+                return;
+            }
+            if (!pageName) {
+                showToast('Page name is required');
+                return;
+            }
+            if (!/^[a-z0-9_]+$/.test(pageName)) {
+                showToast('Page name can only have lowercase letters, numbers, and underscores');
+                return;
+            }
+            
+            // Collect social links
+            let telegramLink = null;
+            let whatsappLink = null;
+            let channelLink = null;
+            let website = null;
+            
+            document.querySelectorAll('.social-row').forEach(row => {
+                const platform = row.querySelector('.social-platform').value;
+                const url = row.querySelector('.social-url').value.trim();
+                if (url) {
+                    if (platform === 'telegram') telegramLink = url;
+                    if (platform === 'whatsapp') whatsappLink = url;
+                    if (platform === 'channel') channelLink = url;
+                    if (platform === 'website') website = url;
+                }
+            });
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-sm"></span>Saving...';
+            
+            // Check if page_name is unique
+            if (!existingProfile || existingProfile.page_name !== pageName) {
+                const { data: existing } = await sb
+                    .from('profiles')
+                    .select('id')
+                    .eq('page_name', pageName)
+                    .maybeSingle();
+                
+                if (existing && existing.id !== currentUser.id) {
+                    showToast('Page name already taken. Choose another.');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '✨ Save & Publish Profile';
+                    return;
+                }
+            }
+            
+            // Save profile
+            const profileData = {
+                id: currentUser.id,
+                display_name: displayName,
+                username: document.getElementById('username').value,
+                page_name: pageName,
+                bio: bio,
+                avatar_url: avatarUrl,
+                cover_url: coverUrl,
+                telegram_link: telegramLink,
+                whatsapp_link: whatsappLink,
+                channel_link: channelLink,
+                website: website,
+                verified_proofs: verificationProofs,
+                whatsapp_number: whatsappNumber || null,
+                telegram_username: telegramUsername || null,
+                show_whatsapp: showWhatsapp,
+                show_telegram: showTelegram,
+                updated_at: new Date().toISOString()
+            };
+            
+            const { error: profileError } = await sb
+                .from('profiles')
+                .upsert(profileData);
+            
+            if (profileError) {
+                showToast('Error: ' + profileError.message);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '✨ Save & Publish Profile';
+                return;
+            }
+            
+            // Save stats
+            const wins = parseInt(document.getElementById('totalWins').value) || 0;
+            const losses = parseInt(document.getElementById('totalLosses').value) || 0;
+            const profit = parseFloat(document.getElementById('totalProfit').value) || 0;
+            const winRate = (wins + losses) > 0 ? (wins / (wins + losses)) * 100 : 0;
+            
+            await sb
+                .from('tipster_stats')
+                .upsert({
+                    tipster_id: currentUser.id,
+                    total_wins: wins,
+                    total_losses: losses,
+                    total_profit: profit,
+                    win_rate: winRate,
+                    updated_at: new Date().toISOString()
+                });
+            
+            showToast('Profile saved! Redirecting...');
+            setTimeout(() => {
+                window.location.href = `tipster.html?page=${pageName}`;
+            }, 1500);
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+        
+        init();
+    </script>
+</body>
+</html>
