@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Dashboard • Prediction-v Tipster</title>
+    <title>Dashboard • Ranka Tipster</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
@@ -108,7 +108,7 @@
             margin-top: 4px;
         }
 
-        /* Quick Actions */
+        /* Section Title */
         .section-title {
             font-size: 0.9rem;
             font-weight: 600;
@@ -120,137 +120,100 @@
             align-items: center;
         }
 
-        .actions-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
+        /* Content Cards */
+        .content-list {
             padding: 0 16px;
             margin-bottom: 24px;
         }
 
-        .action-card {
+        .content-card {
             background: #12141c;
             border-radius: 16px;
-            padding: 16px 8px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
+            margin-bottom: 12px;
+            overflow: hidden;
             border: 1px solid rgba(255,255,255,0.05);
-            text-decoration: none;
-            color: white;
-            display: block;
         }
 
-        .action-card:active {
-            transform: scale(0.96);
+        .card-content {
+            padding: 12px;
         }
 
-        .action-icon {
-            font-size: 1.8rem;
-            margin-bottom: 8px;
-        }
-
-        .action-label {
-            font-size: 0.7rem;
-            font-weight: 600;
-        }
-
-        .action-desc {
-            font-size: 0.6rem;
-            color: #6b6b7a;
-            margin-top: 4px;
-        }
-
-        /* Recent Items */
-        .recent-section {
-            margin-bottom: 20px;
-        }
-
-        .recent-header {
+        .card-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding: 0 16px;
-            margin-bottom: 12px;
-        }
-
-        .recent-title {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #8e8e9a;
-        }
-
-        .view-all {
-            font-size: 0.7rem;
-            color: #f5576c;
-            text-decoration: none;
-        }
-
-        .recent-list {
-            padding: 0 16px;
-        }
-
-        .recent-item {
-            background: #12141c;
-            border-radius: 12px;
-            padding: 12px;
+            align-items: flex-start;
             margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            border: 1px solid rgba(255,255,255,0.05);
         }
 
-        .recent-item:active {
-            transform: scale(0.98);
-        }
-
-        .recent-icon {
-            width: 40px;
-            height: 40px;
-            background: rgba(245, 87, 108, 0.15);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-        }
-
-        .recent-info {
+        .card-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #fff;
             flex: 1;
         }
 
-        .recent-title-text {
-            font-weight: 600;
-            font-size: 0.85rem;
-            margin-bottom: 2px;
+        .card-badge {
+            font-size: 0.65rem;
+            padding: 2px 8px;
+            border-radius: 12px;
         }
 
-        .recent-meta {
+        .badge-post { background: rgba(30, 158, 255, 0.2); color: #1e9eff; }
+        .badge-prediction { background: rgba(245, 87, 108, 0.2); color: #f5576c; }
+        .badge-story { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+
+        .card-preview {
+            font-size: 0.8rem;
+            color: #8e8e9a;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .card-image {
+            width: 100%;
+            max-height: 150px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-top: 8px;
+        }
+
+        .card-meta {
             font-size: 0.65rem;
             color: #6b6b7a;
+            margin-bottom: 10px;
         }
 
-        .recent-status {
-            font-size: 0.7rem;
-            padding: 2px 8px;
+        .card-actions {
+            display: flex;
+            gap: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .card-btn {
+            background: rgba(255,255,255,0.05);
+            border: none;
+            padding: 6px 12px;
             border-radius: 20px;
+            color: white;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.2s;
         }
 
-        .status-won {
-            background: rgba(16, 185, 129, 0.2);
-            color: #10b981;
+        .card-btn.edit {
+            background: rgba(30, 158, 255, 0.2);
+            color: #1e9eff;
         }
 
-        .status-lost {
+        .card-btn.delete {
             background: rgba(239, 68, 68, 0.2);
             color: #ef4444;
         }
 
-        .status-pending {
-            background: rgba(245, 158, 11, 0.2);
-            color: #f59e0b;
+        .card-btn.view {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
         }
 
         /* Empty State */
@@ -260,6 +223,86 @@
             color: #6b6b7a;
             background: #12141c;
             border-radius: 16px;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            display: none;
+        }
+
+        .modal-content {
+            background: #12141c;
+            border-radius: 24px;
+            padding: 24px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .modal-header {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .modal input, .modal textarea {
+            width: 100%;
+            background: #1a1c26;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 12px;
+            color: white;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+            font-family: inherit;
+        }
+
+        .modal textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 28px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .modal-btn.save {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white;
+        }
+
+        .modal-btn.cancel {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        .modal-btn.delete-confirm {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid #ef4444;
         }
 
         /* Bottom Nav */
@@ -294,6 +337,42 @@
 
         .bottom-nav span {
             font-size: 0.65rem;
+        }
+
+        /* Quick Actions */
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            padding: 0 16px;
+            margin-bottom: 24px;
+        }
+
+        .action-card {
+            background: #12141c;
+            border-radius: 16px;
+            padding: 16px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid rgba(255,255,255,0.05);
+            text-decoration: none;
+            color: white;
+            display: block;
+        }
+
+        .action-card:active {
+            transform: scale(0.96);
+        }
+
+        .action-icon {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        .action-label {
+            font-size: 0.7rem;
+            font-weight: 600;
         }
 
         /* Loading */
@@ -336,7 +415,6 @@
             opacity: 1;
         }
 
-        /* Warning Box */
         .warning-box {
             background: rgba(239, 68, 68, 0.1);
             border: 1px solid rgba(239, 68, 68, 0.3);
@@ -350,7 +428,7 @@
 <body>
     <div class="app">
         <div class="header">
-            <div class="logo">Predictiom-V</div>
+            <div class="logo">Ⓡⓐⓝⓚⓐ</div>
             <button class="profile-icon" onclick="window.location.href='profile.html'">👤</button>
         </div>
 
@@ -370,6 +448,31 @@
         </div>
     </div>
 
+    <!-- Edit Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header" id="modalTitle">Edit Item</div>
+            <input type="text" id="editTitle" placeholder="Title / Match Name" style="display: none;">
+            <textarea id="editContent" placeholder="Content"></textarea>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" onclick="closeEditModal()">Cancel</button>
+                <button class="modal-btn save" onclick="saveEdit()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirm Modal -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <div class="modal-header">Delete Item</div>
+            <p style="margin-bottom: 20px;">Are you sure you want to delete this item? This action cannot be undone.</p>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" onclick="closeDeleteModal()">Cancel</button>
+                <button class="modal-btn delete-confirm" onclick="confirmDelete()">Delete Permanently</button>
+            </div>
+        </div>
+    </div>
+
     <div class="toast" id="toast"></div>
 
     <script>
@@ -380,9 +483,14 @@
         
         let currentUser = null;
         let tipsterProfile = null;
-        let recentPosts = [];
-        let recentPredictions = [];
-        let recentStories = [];
+        let posts = [];
+        let predictions = [];
+        let stories = [];
+        
+        let currentEditItem = null;
+        let currentEditType = null;
+        let currentDeleteItem = null;
+        let currentDeleteType = null;
         
         async function init() {
             const { data: { user } } = await sb.auth.getUser();
@@ -409,7 +517,6 @@
             }
             
             if (!profile || !profile.page_name) {
-                // User is not a tipster - show setup prompt
                 document.getElementById('dashboardContent').innerHTML = `
                     <div class="warning-box">
                         <div style="font-size: 3rem; margin-bottom: 12px;">⚠️</div>
@@ -422,114 +529,86 @@
             }
             
             tipsterProfile = profile;
-            await loadStats();
-            await loadRecentPosts();
-            await loadRecentPredictions();
-            await loadRecentStories();
+            await loadAllContent();
             renderDashboard();
         }
         
-        async function loadStats() {
-            // Get predictions stats
-            const { data: predictions } = await sb
-                .from('predictions')
-                .select('status, stake, potential_return')
-                .eq('tipster_id', currentUser.id);
-            
-            const wins = (predictions || []).filter(p => p.status === 'won').length;
-            const losses = (predictions || []).filter(p => p.status === 'lost').length;
-            const pending = (predictions || []).filter(p => p.status === 'pending').length;
-            const totalPicks = (predictions || []).length;
-            const winRate = totalPicks > 0 ? Math.round((wins / totalPicks) * 100) : 0;
-            
-            // Get posts count
-            const { count: postsCount } = await sb
-                .from('posts')
-                .select('*', { count: 'exact', head: true })
-                .eq('tipster_id', currentUser.id);
-            
-            // Get stories count
-            const { count: storiesCount } = await sb
-                .from('stories')
-                .select('*', { count: 'exact', head: true })
-                .eq('tipster_id', currentUser.id)
-                .gte('expires_at', new Date().toISOString());
-            
-            // Get followers count
-            const { count: followersCount } = await sb
-                .from('follows')
-                .select('*', { count: 'exact', head: true })
-                .eq('following_id', currentUser.id);
-            
-            tipsterProfile.stats = {
-                wins, losses, pending, totalPicks, winRate,
-                postsCount: postsCount || 0,
-                storiesCount: storiesCount || 0,
-                followersCount: followersCount || 0
-            };
+        async function loadAllContent() {
+            await Promise.all([
+                loadPosts(),
+                loadPredictions(),
+                loadStories()
+            ]);
         }
         
-        async function loadRecentPosts() {
-            const { data: posts } = await sb
+        async function loadPosts() {
+            const { data, error } = await sb
                 .from('posts')
                 .select('*')
                 .eq('tipster_id', currentUser.id)
-                .order('created_at', { ascending: false })
-                .limit(5);
+                .order('created_at', { ascending: false });
             
-            recentPosts = posts || [];
+            if (!error) {
+                posts = data || [];
+            }
         }
         
-        async function loadRecentPredictions() {
-            const { data: predictions } = await sb
+        async function loadPredictions() {
+            const { data, error } = await sb
                 .from('predictions')
                 .select('*')
                 .eq('tipster_id', currentUser.id)
-                .order('created_at', { ascending: false })
-                .limit(5);
+                .order('created_at', { ascending: false });
             
-            recentPredictions = predictions || [];
+            if (!error) {
+                predictions = data || [];
+            }
         }
         
-        async function loadRecentStories() {
-            const { data: stories } = await sb
+        async function loadStories() {
+            const { data, error } = await sb
                 .from('stories')
                 .select('*')
                 .eq('tipster_id', currentUser.id)
-                .gte('expires_at', new Date().toISOString())
-                .order('created_at', { ascending: false })
-                .limit(3);
+                .order('created_at', { ascending: false });
             
-            recentStories = stories || [];
+            if (!error) {
+                stories = data || [];
+            }
         }
         
         function renderDashboard() {
             const container = document.getElementById('dashboardContent');
-            const stats = tipsterProfile.stats;
             const displayName = tipsterProfile.display_name || tipsterProfile.username;
+            
+            // Calculate stats
+            const wins = predictions.filter(p => p.status === 'won').length;
+            const losses = predictions.filter(p => p.status === 'lost').length;
+            const totalPicks = predictions.length;
+            const winRate = totalPicks > 0 ? Math.round((wins / totalPicks) * 100) : 0;
             
             container.innerHTML = `
                 <div class="welcome-banner">
                     <div class="welcome-text">Welcome back, ${escapeHtml(displayName)}!</div>
-                    <div class="welcome-sub">@${escapeHtml(tipsterProfile.page_name)} • ${stats.followersCount} followers</div>
+                    <div class="welcome-sub">@${escapeHtml(tipsterProfile.page_name)} • Manage your content</div>
                 </div>
                 
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <div class="stat-value">${stats.totalPicks}</div>
-                        <div class="stat-label">Total Picks</div>
+                        <div class="stat-value">${posts.length}</div>
+                        <div class="stat-label">Posts</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value">${stats.winRate}%</div>
-                        <div class="stat-label">Win Rate</div>
+                        <div class="stat-value">${predictions.length}</div>
+                        <div class="stat-label">Predictions</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value">${stats.wins}</div>
-                        <div class="stat-label">Wins</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">${stats.storiesCount}</div>
+                        <div class="stat-value">${stories.filter(s => new Date(s.expires_at) > new Date()).length}</div>
                         <div class="stat-label">Active Stories</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${winRate}%</div>
+                        <div class="stat-label">Win Rate</div>
                     </div>
                 </div>
                 
@@ -538,141 +617,289 @@
                     <div class="action-card" onclick="window.location.href='create-post.html'">
                         <div class="action-icon">📝</div>
                         <div class="action-label">Create Post</div>
-                        <div class="action-desc">Share text & image</div>
                     </div>
                     <div class="action-card" onclick="window.location.href='create-prediction.html'">
                         <div class="action-icon">🎯</div>
                         <div class="action-label">Add Prediction</div>
-                        <div class="action-desc">Match + odds + proof</div>
                     </div>
                     <div class="action-card" onclick="window.location.href='create-story.html'">
                         <div class="action-icon">📸</div>
                         <div class="action-label">Post Story</div>
-                        <div class="action-desc">24h ephemeral</div>
                     </div>
                 </div>
                 
-                <div class="recent-section">
-                    <div class="recent-header">
-                        <span class="recent-title">📋 Recent Posts</span>
-                        ${recentPosts.length > 0 ? `<a href="javascript:void(0)" class="view-all" onclick="viewAll('posts')">View all →</a>` : ''}
-                    </div>
-                    <div class="recent-list">
-                        ${renderRecentPosts()}
-                    </div>
+                <div class="section-title">
+                    📝 Your Posts
+                    <span style="font-size: 0.7rem;">${posts.length} total</span>
+                </div>
+                <div class="content-list">
+                    ${renderPostsList()}
                 </div>
                 
-                <div class="recent-section">
-                    <div class="recent-header">
-                        <span class="recent-title">🎯 Recent Predictions</span>
-                        ${recentPredictions.length > 0 ? `<a href="javascript:void(0)" class="view-all" onclick="viewAll('predictions')">View all →</a>` : ''}
-                    </div>
-                    <div class="recent-list">
-                        ${renderRecentPredictions()}
-                    </div>
+                <div class="section-title">
+                    🎯 Your Predictions
+                    <span style="font-size: 0.7rem;">${predictions.length} total</span>
+                </div>
+                <div class="content-list">
+                    ${renderPredictionsList()}
                 </div>
                 
-                <div class="recent-section">
-                    <div class="recent-header">
-                        <span class="recent-title">⏳ Active Stories</span>
-                        ${recentStories.length > 0 ? `<a href="javascript:void(0)" class="view-all" onclick="viewAll('stories')">View all →</a>` : ''}
-                    </div>
-                    <div class="recent-list">
-                        ${renderRecentStories()}
-                    </div>
+                <div class="section-title">
+                    📸 Your Stories
+                    <span style="font-size: 0.7rem;">${stories.filter(s => new Date(s.expires_at) > new Date()).length} active</span>
+                </div>
+                <div class="content-list">
+                    ${renderStoriesList()}
                 </div>
             `;
         }
         
-        function renderRecentPosts() {
-            if (recentPosts.length === 0) {
-                return `
-                    <div class="empty-state">
-                        <div style="font-size: 2rem; margin-bottom: 8px;">📭</div>
-                        <p style="font-size: 0.8rem;">No posts yet. Create your first post!</p>
-                    </div>
-                `;
+        function renderPostsList() {
+            if (posts.length === 0) {
+                return `<div class="empty-state">No posts yet. Create your first post!</div>`;
             }
             
-            return recentPosts.map(post => `
-                <div class="recent-item" onclick="window.location.href='tipster.html?page=${tipsterProfile.page_name}'">
-                    <div class="recent-icon">📝</div>
-                    <div class="recent-info">
-                        <div class="recent-title-text">${escapeHtml(post.content.substring(0, 50))}${post.content.length > 50 ? '...' : ''}</div>
-                        <div class="recent-meta">${timeAgo(post.created_at)} • ${post.likes_count || 0} likes</div>
+            return posts.map(post => `
+                <div class="content-card">
+                    <div class="card-content">
+                        <div class="card-header">
+                            <span class="card-title">${escapeHtml(post.content.substring(0, 50))}${post.content.length > 50 ? '...' : ''}</span>
+                            <span class="card-badge badge-post">Post</span>
+                        </div>
+                        <div class="card-preview">${escapeHtml(post.content.substring(0, 100))}${post.content.length > 100 ? '...' : ''}</div>
+                        ${post.image_url ? `<img src="${post.image_url}" class="card-image" alt="Post image">` : ''}
+                        <div class="card-meta">${timeAgo(post.created_at)} • ❤️ ${post.likes_count || 0} likes</div>
+                        <div class="card-actions">
+                            <button class="card-btn view" onclick="viewPost('${post.id}')">👁️ View</button>
+                            <button class="card-btn edit" onclick="openEditModal('post', '${post.id}', '${escapeHtml(post.content).replace(/'/g, "\\'")}')">✏️ Edit</button>
+                            <button class="card-btn delete" onclick="openDeleteModal('post', '${post.id}')">🗑️ Delete</button>
+                        </div>
                     </div>
-                    <div style="font-size: 0.7rem; color: #6b6b7a;">→</div>
                 </div>
             `).join('');
         }
         
-        function renderRecentPredictions() {
-            if (recentPredictions.length === 0) {
-                return `
-                    <div class="empty-state">
-                        <div style="font-size: 2rem; margin-bottom: 8px;">🎯</div>
-                        <p style="font-size: 0.8rem;">No predictions yet. Add your first prediction!</p>
-                    </div>
-                `;
+        function renderPredictionsList() {
+            if (predictions.length === 0) {
+                return `<div class="empty-state">No predictions yet. Add your first prediction!</div>`;
             }
             
-            return recentPredictions.map(pred => {
+            return predictions.map(pred => {
                 let statusClass = '';
                 let statusText = '';
                 if (pred.status === 'won') {
-                    statusClass = 'status-won';
+                    statusClass = 'badge-post';
                     statusText = 'WON';
                 } else if (pred.status === 'lost') {
-                    statusClass = 'status-lost';
+                    statusClass = 'badge-story';
                     statusText = 'LOST';
                 } else {
-                    statusClass = 'status-pending';
+                    statusClass = 'badge-prediction';
                     statusText = 'PENDING';
                 }
                 
                 return `
-                    <div class="recent-item" onclick="window.location.href='prediction.html?id=${pred.id}'">
-                        <div class="recent-icon">🎯</div>
-                        <div class="recent-info">
-                            <div class="recent-title-text">${escapeHtml(pred.match_name)}</div>
-                            <div class="recent-meta">${timeAgo(pred.created_at)} • ${pred.prediction_value || 'Pick'}</div>
+                    <div class="content-card">
+                        <div class="card-content">
+                            <div class="card-header">
+                                <span class="card-title">${escapeHtml(pred.match_name)}</span>
+                                <span class="card-badge ${statusClass}">${statusText}</span>
+                            </div>
+                            <div class="card-preview">🎯 ${escapeHtml(pred.prediction_value || pred.prediction_type || 'Pick')}</div>
+                            ${pred.odds ? `<div class="card-preview">📊 Odds: ${pred.odds}</div>` : ''}
+                            <div class="card-meta">${timeAgo(pred.created_at)}</div>
+                            <div class="card-actions">
+                                <button class="card-btn view" onclick="viewPrediction('${pred.id}')">👁️ View</button>
+                                <button class="card-btn edit" onclick="openEditModal('prediction', '${pred.id}', '${escapeHtml(pred.prediction_value || '').replace(/'/g, "\\'")}', '${escapeHtml(pred.match_name).replace(/'/g, "\\'")}')">✏️ Edit</button>
+                                <button class="card-btn delete" onclick="openDeleteModal('prediction', '${pred.id}')">🗑️ Delete</button>
+                            </div>
                         </div>
-                        <div class="recent-status ${statusClass}">${statusText}</div>
                     </div>
                 `;
             }).join('');
         }
         
-        function renderRecentStories() {
-            if (recentStories.length === 0) {
-                return `
-                    <div class="empty-state">
-                        <div style="font-size: 2rem; margin-bottom: 8px;">📸</div>
-                        <p style="font-size: 0.8rem;">No active stories. Create a story to engage followers!</p>
-                    </div>
-                `;
+        function renderStoriesList() {
+            const activeStories = stories.filter(s => new Date(s.expires_at) > new Date());
+            if (activeStories.length === 0) {
+                return `<div class="empty-state">No active stories. Create a story to engage followers!</div>`;
             }
             
-            return recentStories.map(story => `
-                <div class="recent-item" onclick="window.location.href='story-viewer.html?tipster=${tipsterProfile.page_name}'">
-                    <div class="recent-icon">📸</div>
-                    <div class="recent-info">
-                        <div class="recent-title-text">${escapeHtml(story.prediction_text || 'Story')}</div>
-                        <div class="recent-meta">Expires in ${getTimeLeft(story.expires_at)} • ${story.views_count || 0} views</div>
+            return activeStories.map(story => `
+                <div class="content-card">
+                    <div class="card-content">
+                        <div class="card-header">
+                            <span class="card-title">${escapeHtml(story.prediction_text || 'Story')}</span>
+                            <span class="card-badge badge-story">Story</span>
+                        </div>
+                        <div class="card-preview">📸 Expires: ${getTimeLeft(story.expires_at)}</div>
+                        ${story.caption ? `<div class="card-preview">${escapeHtml(story.caption.substring(0, 50))}${story.caption.length > 50 ? '...' : ''}</div>` : ''}
+                        <div class="card-meta">👁️ ${story.views_count || 0} views</div>
+                        <div class="card-actions">
+                            <button class="card-btn delete" onclick="openDeleteModal('story', '${story.id}')">🗑️ Delete</button>
+                        </div>
                     </div>
-                    <div style="font-size: 0.7rem; color: #6b6b7a;">→</div>
                 </div>
             `).join('');
         }
         
-        function viewAll(type) {
-            if (type === 'posts') {
-                window.location.href = `tipster.html?page=${tipsterProfile.page_name}&tab=posts`;
-            } else if (type === 'predictions') {
-                window.location.href = `tipster.html?page=${tipsterProfile.page_name}&tab=predictions`;
-            } else if (type === 'stories') {
-                window.location.href = `story-viewer.html?tipster=${tipsterProfile.page_name}`;
+        function viewPost(postId) {
+            window.location.href = `tipster.html?page=${tipsterProfile.page_name}`;
+        }
+        
+        function viewPrediction(predictionId) {
+            window.location.href = `prediction.html?id=${predictionId}`;
+        }
+        
+        function openEditModal(type, id, content, title = null) {
+            currentEditType = type;
+            currentEditItem = { id, content, title };
+            
+            const modal = document.getElementById('editModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const editTitleInput = document.getElementById('editTitle');
+            const editContentArea = document.getElementById('editContent');
+            
+            if (type === 'prediction') {
+                modalTitle.textContent = 'Edit Prediction';
+                editTitleInput.style.display = 'block';
+                editTitleInput.placeholder = 'Match Name';
+                editTitleInput.value = title || '';
+                editContentArea.placeholder = 'Prediction Value';
+                editContentArea.value = content;
+            } else {
+                modalTitle.textContent = 'Edit Post';
+                editTitleInput.style.display = 'none';
+                editContentArea.placeholder = 'Post Content';
+                editContentArea.value = content;
             }
+            
+            modal.style.display = 'flex';
+        }
+        
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+            currentEditItem = null;
+            currentEditType = null;
+        }
+        
+        async function saveEdit() {
+            if (!currentEditItem) return;
+            
+            const newContent = document.getElementById('editContent').value.trim();
+            
+            if (!newContent) {
+                showToast('Content cannot be empty');
+                return;
+            }
+            
+            let updateData = {};
+            
+            if (currentEditType === 'post') {
+                updateData = { content: newContent, updated_at: new Date().toISOString() };
+                const { error } = await sb
+                    .from('posts')
+                    .update(updateData)
+                    .eq('id', currentEditItem.id)
+                    .eq('tipster_id', currentUser.id);
+                
+                if (error) {
+                    showToast('Error updating post: ' + error.message);
+                    return;
+                }
+                
+                // Update local array
+                const post = posts.find(p => p.id === currentEditItem.id);
+                if (post) post.content = newContent;
+                
+            } else if (currentEditType === 'prediction') {
+                const newTitle = document.getElementById('editTitle').value.trim();
+                updateData = { prediction_value: newContent, updated_at: new Date().toISOString() };
+                if (newTitle) updateData.match_name = newTitle;
+                
+                const { error } = await sb
+                    .from('predictions')
+                    .update(updateData)
+                    .eq('id', currentEditItem.id)
+                    .eq('tipster_id', currentUser.id);
+                
+                if (error) {
+                    showToast('Error updating prediction: ' + error.message);
+                    return;
+                }
+                
+                // Update local array
+                const pred = predictions.find(p => p.id === currentEditItem.id);
+                if (pred) {
+                    pred.prediction_value = newContent;
+                    if (newTitle) pred.match_name = newTitle;
+                }
+            }
+            
+            showToast('Updated successfully!');
+            closeEditModal();
+            renderDashboard();
+        }
+        
+        function openDeleteModal(type, id) {
+            currentDeleteType = type;
+            currentDeleteItem = id;
+            document.getElementById('deleteModal').style.display = 'flex';
+        }
+        
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+            currentDeleteItem = null;
+            currentDeleteType = null;
+        }
+        
+        async function confirmDelete() {
+            if (!currentDeleteItem) return;
+            
+            let error = null;
+            
+            if (currentDeleteType === 'post') {
+                const { error: deleteError } = await sb
+                    .from('posts')
+                    .delete()
+                    .eq('id', currentDeleteItem)
+                    .eq('tipster_id', currentUser.id);
+                error = deleteError;
+                
+                // Remove from local array
+                posts = posts.filter(p => p.id !== currentDeleteItem);
+                
+            } else if (currentDeleteType === 'prediction') {
+                const { error: deleteError } = await sb
+                    .from('predictions')
+                    .delete()
+                    .eq('id', currentDeleteItem)
+                    .eq('tipster_id', currentUser.id);
+                error = deleteError;
+                
+                // Remove from local array
+                predictions = predictions.filter(p => p.id !== currentDeleteItem);
+                
+            } else if (currentDeleteType === 'story') {
+                const { error: deleteError } = await sb
+                    .from('stories')
+                    .delete()
+                    .eq('id', currentDeleteItem)
+                    .eq('tipster_id', currentUser.id);
+                error = deleteError;
+                
+                // Remove from local array
+                stories = stories.filter(s => s.id !== currentDeleteItem);
+            }
+            
+            if (error) {
+                showToast('Error deleting: ' + error.message);
+            } else {
+                showToast('Deleted successfully!');
+            }
+            
+            closeDeleteModal();
+            renderDashboard();
         }
         
         function getTimeLeft(expiresAt) {
