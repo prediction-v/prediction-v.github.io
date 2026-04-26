@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>Send Feedback • Ranka</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             margin: 0;
@@ -117,6 +118,15 @@
             cursor: not-allowed;
         }
 
+        .success-box {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 16px;
+            padding: 16px;
+            margin: 16px;
+            text-align: center;
+        }
+
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -194,25 +204,27 @@
             <div style="width: 32px;"></div>
         </div>
 
-        <div class="section">
-            <div class="form-group">
-                <label>Your Email (optional)</label>
-                <input type="email" id="email" placeholder="we may reach out">
+        <div id="mainContent">
+            <div class="section">
+                <div class="form-group">
+                    <label>Your Email (optional - so we can reply)</label>
+                    <input type="email" id="email" placeholder="you@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Feedback Type</label>
+                    <select id="type">
+                        <option value="suggestion">💡 Suggestion</option>
+                        <option value="bug">🐛 Bug Report</option>
+                        <option value="feature">✨ Feature Request</option>
+                        <option value="general">💬 General Feedback</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Your Message <span class="required" style="color:#f5576c;">*</span></label>
+                    <textarea id="message" placeholder="Tell us what you think..."></textarea>
+                </div>
+                <button class="btn-primary" id="submitBtn" onclick="sendFeedback()">Send Feedback →</button>
             </div>
-            <div class="form-group">
-                <label>Feedback Type</label>
-                <select id="type">
-                    <option value="suggestion">💡 Suggestion</option>
-                    <option value="bug">🐛 Bug Report</option>
-                    <option value="feature">✨ Feature Request</option>
-                    <option value="general">💬 General Feedback</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Your Message</label>
-                <textarea id="message" placeholder="Tell us what you think..."></textarea>
-            </div>
-            <button class="btn-primary" id="submitBtn" onclick="sendFeedback()">Send Feedback →</button>
         </div>
 
         <div class="bottom-nav">
@@ -227,8 +239,23 @@
     <div class="toast" id="toast"></div>
 
     <script>
-        const WEBHOOK_URL = 'https://your-webhook-url.com/feedback'; // Replace with your webhook
-
+        const SUPABASE_URL = 'https://wmqsephiktkndrzasdam.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndtcXNlcGhpa3RrbmRyemFzZGFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNzk2NDEsImV4cCI6MjA5MjY1NTY0MX0.cpun979RKcODBePmVFij02PPcLwiSTRESrzPkiuTB5I';
+        
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let currentUser = null;
+        
+        async function init() {
+            const { data: { user } } = await sb.auth.getUser();
+            currentUser = user;
+            
+            // Pre-fill email if user is logged in
+            if (currentUser && currentUser.email) {
+                document.getElementById('email').value = currentUser.email;
+            }
+        }
+        
         async function sendFeedback() {
             const email = document.getElementById('email').value.trim();
             const type = document.getElementById('type').value;
@@ -243,26 +270,39 @@
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="spinner-sm"></span>Sending...';
             
-            // Prepare email content
-            const subject = `Ranka Feedback: ${type}`;
-            const body = `
-Feedback Type: ${type}
-From: ${email || 'Anonymous'}
-
-Message:
-${message}
-            `;
+            // Insert feedback into database
+            const { data, error } = await sb
+                .from('feedback')
+                .insert({
+                    user_id: currentUser?.id || null,
+                    email: email || null,
+                    type: type,
+                    message: message,
+                    status: 'pending',
+                    created_at: new Date().toISOString()
+                })
+                .select();
             
-            // Send via mailto (opens email client)
-            window.location.href = `mailto:support@ranka.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-            
-            showToast('Opening email client...');
-            setTimeout(() => {
-                document.getElementById('email').value = '';
-                document.getElementById('message').value = '';
+            if (error) {
+                console.error('Error saving feedback:', error);
+                showToast('Error sending feedback: ' + error.message);
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = 'Send Feedback →';
-            }, 1000);
+                return;
+            }
+            
+            // Show success message
+            const container = document.getElementById('mainContent');
+            container.innerHTML = `
+                <div class="success-box">
+                    <div style="font-size: 3rem; margin-bottom: 12px;">✅</div>
+                    <h3>Thank you for your feedback!</h3>
+                    <p style="margin-top: 8px; color: #8e8e9a;">We appreciate you helping us improve Ranka.</p>
+                    <a href="index.html" class="btn-primary" style="display: inline-block; width: auto; margin-top: 16px; text-decoration: none;">Back to Feed →</a>
+                </div>
+            `;
+            
+            showToast('Feedback sent! Thank you 🙏');
         }
         
         function showToast(message) {
@@ -271,6 +311,8 @@ ${message}
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
+        
+        init();
     </script>
 </body>
 </html>
